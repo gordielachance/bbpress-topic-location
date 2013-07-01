@@ -1,0 +1,23 @@
+<?php
+
+$bbp = bbpress();
+$query = $bbp->search_query;
+$origin_point = $query->get('bpptl_origin_point');
+$geo_input = $query->get('bpptl_origin_point_input');
+$post_types = $query->get('post_type');
+
+
+if(!$origin_point){ //location could'nt be found
+    ?>
+    <div class="bbp-template-notice error">
+            <p><?php printf(__( "The input location you wanted to search from (%s) wasn't found and has been ignored.", 'bbptl' ),$geo_input); ?></p>
+    </div>
+    <?php
+}else{
+    ?>
+    <div class="bbp-template-notice">
+            <p><?php printf(__( 'This search returns <strong>only</strong> %1s that are geolocated %2s %3s around "%4s"', 'bbptl' ),bbptl_get_post_type_list($post_types),$origin_point['Distance'],bbptl_get_unit_name(),$origin_point['Address']); ?></p>
+    </div>
+    <?php
+}
+?>

@@ -1,0 +1,22 @@
+.bpptl_location_helper{
+    font-size:0.8em;
+    padding-left:10px;
+}
+.bbptl_location_field input[type=text].loading{
+    background:url("images/loading.gif") no-repeat scroll 98% 50% transparent;
+}
+
+.bbp-topic-meta.bbptl{
+	color:#888;
+	font-weight:bold;
+}
+/*widget*/
+.bbptl_search_widget_display #bbptl_search_fields p{
+    display:inline;
+}
+.bbptl_search_widget_display #bbptl_search_fields .bbptl_distance_field label{
+    display:none;
+}
+.bbptl_search_widget_display #bbptl_search_submit{
+    margin-top:10px;
+}
