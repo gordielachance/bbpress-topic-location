@@ -2,7 +2,7 @@
 Contributors: G.Breant
 Tags: bbpress,google maps,geolocation,geo-location
 Requires at least: 3.3
-Tested up to: 3.5.2
+Tested up to: 4
 Stable tag: trunk
 Donate link:http://bit.ly/gbreant
 
@@ -67,7 +67,11 @@ See functions listed in the file bbptl-template-tags.php
 4. Search results, with (bbPress) Geo Search Widget on the side
 
 == Changelog ==
-
+= 1.0.7 =
+* Added admin settings
+* New template functions bbptl_post_has_geo(), bbptl_post_address(), bbptl_get_post_address(), bbptl_post_latitude(), bbptl_get_post_latitude(), , bbptl_post_longitude(), bbptl_get_post_longitude() 
+* Added class 'has-location' for topics and replies having a location
+* Various code improvements
 = 1.0.6 =
 * Minor
 = 1.0.5 =

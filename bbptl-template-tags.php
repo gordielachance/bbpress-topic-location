@@ -1,35 +1,60 @@
 <?php
 
 /**
-* Output the location of the post (address,latitude,longitude,input when geo-located)
-
-* @param int $post_id Optional. Post id
-* @uses bbptl_get_post_info() To get the post location
-*/
-function bbptl_post_info( $post_id = 0, $infokey='Address' ) {
-        echo bbptl_get_post_info( $post_id, $infokey );
+ * Check wheter or not a post as a location attached.
+ * @param type $post_id
+ * @return boolean
+ */
+function bbptl_post_has_geo($post_id = false){
+    if ($post_location = bbptl_get_location_obj($post_id)) return true;
+    return false;
 }
 
 /**
-* Return the location of the post (address,latitude,longitude,input when geo-located)
-*
-* @param int $post_id Optional. Post id
-* @uses bbptl_get_location_raw() To get the location infos
-* @uses apply_filters() Calls 'bbptl_get_location' with the address,reply id and location infos
-* @return string Address
-*/
-function bbptl_get_post_info( $post_id = 0,$infokey='Address' ) {
-    global $post;
-    if(!$post_id) $post_id = $post->ID;
-
-    $location = bbptl_get_location_raw($post_id);
-
-    if (!$location) return false;
+ * Return the address of a geo-located post, and allow filters on it.
+ * Filters can be used here to mask the real address, etc.
+ * @param type $post_id
+ */
+function bbptl_get_post_address($post_id = false){
+    if ($post_location = bbptl_get_location_obj($post_id)){
+        return apply_filters('bbptl_get_post_address',$post_location['Address']);
+    }
     
-    if(!isset($location[$infokey])) return false;
-
-    return apply_filters( 'bbptl_get_post_info', $location[$infokey], $post_id,$location );
 }
+    
+    function bbptl_post_address($post_id = false){
+        echo bbptl_get_post_address($post_id);
+    }
+    
+/**
+ * Return the latitude of a geo-located post, and allow filters on it.
+ * @param type $post_id
+ */
+function bbptl_get_post_latitude($post_id = false){
+    if ($post_location = bbptl_get_location_obj($post_id)) {
+        return apply_filters('bbptl_get_post_latitude',$post_location['Latitude']);
+    }
+    
+}
+
+    function bbptl_post_latitude($post_id = false){
+        echo bbptl_get_post_latitude($post_id);
+    }
+   
+/**
+ * Return the latitude of a geo-located post, and allow filters on it.
+ * @param type $post_id
+ */
+function bbptl_get_post_longitude($post_id = false){
+    if ($post_location = bbptl_get_location_obj($post_id)){
+        return apply_filters('bbptl_get_post_longitude',$post_location['Longitude']);
+    }
+    
+}
+
+    function bbptl_post_longitude($post_id = false){
+        echo bbptl_get_post_longitude($post_id);
+    }
 
 /**
  * Check if current page is a search page
@@ -61,9 +86,9 @@ function bbptl_is_search() {
 	// Check $_GET
 	if ( empty( $retval ) && 
                 (
-                    ((isset( $_GET[bbp_topic_location()->lat_rewrite_id] ) )&&isset( $_GET[bbp_topic_location()->lng_rewrite_id] ))
+                    ((isset( $_GET[bbptl()->lat_rewrite_id] ) )&&isset( $_GET[bbptl()->lng_rewrite_id] ))
 
-                    ||(isset( $_GET[bbp_topic_location()->addr_rewrite_id]))
+                    ||(isset( $_GET[bbptl()->addr_rewrite_id]))
                     )
                 )
 		$retval = true;
@@ -96,7 +121,7 @@ function bbptl_search_latitude( $latitude = '' ) {
 	 */
 	function bbptl_get_search_latitude( $latitude = '' ) {
 
-		$latitude = !empty( $latitude ) ? sanitize_title( $latitude ) : get_query_var( bbp_topic_location()->lat_rewrite_id );
+		$latitude = !empty( $latitude ) ? sanitize_title( $latitude ) : get_query_var( bbptl()->lat_rewrite_id );
 
 		if ( !empty( $latitude ) )
 			return $latitude;
@@ -129,7 +154,7 @@ function bbptl_search_longitude( $longitude = '' ) {
 	 */
 	function bbptl_get_search_longitude( $longitude = '' ) {
 
-		$longitude = !empty( $longitude ) ? sanitize_title( $longitude ) : get_query_var( bbp_topic_location()->lng_rewrite_id );
+		$longitude = !empty( $longitude ) ? sanitize_title( $longitude ) : get_query_var( bbptl()->lng_rewrite_id );
 
 		if ( !empty( $longitude ) )
 			return $longitude;
@@ -162,10 +187,10 @@ function bbptl_search_distance( $distance = '' ) {
 	 */
 	function bbptl_get_search_distance( $distance = '' ) {
 
-		$distance = !empty( $distance ) ? sanitize_title( $distance ) : get_query_var( bbp_topic_location()->dist_rewrite_id );
+		$distance = !empty( $distance ) ? sanitize_title( $distance ) : get_query_var( bbptl()->dist_rewrite_id );
 
 		if (empty( $distance ) ){
-                    return bbp_topic_location()->distance;
+                        return $selected = bbptl()->get_option( '_bbptl_distance');
                 }
                 
                 return $distance;
@@ -196,7 +221,7 @@ function bbptl_search_address( $address = '' ) {
 	 */
 	function bbptl_get_search_address( $address = '' ) {
 
-		$address = !empty( $address ) ? sanitize_title( $address ) : get_query_var( bbp_topic_location()->addr_rewrite_id );
+		$address = !empty( $address ) ? sanitize_title( $address ) : get_query_var( bbptl()->addr_rewrite_id );
 
 		if (!empty( $address ) ){
                     return $address;
@@ -214,7 +239,7 @@ function bbptl_unit_name() {
      * @return type
      */
     function bbptl_get_unit_name() {
-        $unit = bbptl_get_current_unit();
+        $unit = bbptl_get_current_unit_obj();
         return $unit['name'];
     }
 
@@ -259,7 +284,7 @@ function bbptl_save_post_geolocation_field(){
     ?>
     <p class="bbptl_location_field clearable">
             <label for="bbptl_location"><?php _e('Location','bbptl' );?>:</label><br />
-            <input type="text" id="bbptl_location" value="<?php bbp_topic_location()->form_topic_location(); ?>" tabindex="<?php bbp_tab_index(); ?>" size="40" name="bbptl_location"/>
+            <input type="text" id="bbptl_location" value="<?php bbptl()->form_topic_location(); ?>" tabindex="<?php bbp_tab_index(); ?>" size="40" name="bbptl_location"/>
     </p>
     <?php
 }
@@ -273,10 +298,56 @@ function bbptl_search_posts_geolocation_field(){
                 $post_obj = get_post_type_object( $post->post_type );
     ?>
     <p class="bbptl_location_field clearable">
-            <label for="<?php echo bbp_topic_location()->addr_rewrite_id;?>"><?php _e('Location','bbptl' );?>:</label><br />
-            <input type="text" id="<?php echo bbp_topic_location()->addr_rewrite_id;?>" value="<?php bbptl_search_address(); ?>" tabindex="<?php bbp_tab_index(); ?>" name="<?php echo bbp_topic_location()->addr_rewrite_id;?>"/>
+            <label for="<?php echo bbptl()->addr_rewrite_id;?>"><?php _e('Location','bbptl' );?>:</label><br />
+            <input type="text" id="<?php echo bbptl()->addr_rewrite_id;?>" value="<?php bbptl_search_address(); ?>" tabindex="<?php bbp_tab_index(); ?>" name="<?php echo bbptl()->addr_rewrite_id;?>"/>
     </p>
     <?php
 }
+
+function bbptl_location_html($post_id = false){
+    echo bbptl_get_location_html($post_id);
+}
+
+function bbptl_get_location_html($post_id = false){
+        global $post;
+        $bbp = bbpress();
+        if (!$post_id) $post_id = $post->ID;
+        
+        if( !bbptl_post_has_geo($post_id) ) return false;
+        
+        
+        
+        $post_location = bbptl_get_location_obj($post_id);
+
+        ob_start();
+
+        ?>
+        <p class="bbp-topic-meta bbptl-post-location">
+            <span class="bbptl-post-address"><?php bbptl_post_address($post_id); ?></span>
+            
+            <?php
+            
+            //display distance from input location
+            if( isset($bbp->search_query) && method_exists($bbp->search_query,'get') && ($origin_point = $bbp->search_query->get('bpptl_origin_point'))){
+
+                if ( $distance = bbptl_get_distance($origin_point['Latitude'],$origin_point['Longitude'],$post_location['Latitude'],$post_location['Longitude']) ){
+                    ?>
+                    <span class="bbptl-post-distance"><?php printf(__('(at %1$s %2$s)','bbpts'),$distance,bbptl_get_unit_name());?></span>
+                    <?php
+                }
+
+            }
+            ?>
+                
+        </p>
+        <?php
+        
+        $output = ob_get_contents();
+        ob_end_clean();
+        return apply_filters('bbptl_get_location_html',$output,$post_id);
+
+    }
+
+
    
 ?>

@@ -18,7 +18,7 @@ function bbptl_locate_template( $template_names, $load = false, $require_once = 
 		if ( ! $template_name )
 			continue;
       
-                $chunks = explode(WP_PLUGIN_DIR,bbp_topic_location()->plugin_dir);
+                $chunks = explode(WP_PLUGIN_DIR,bbptl()->plugin_dir);
                 $plugin_dirname = $chunks[1];
 
 		if ( file_exists( STYLESHEETPATH . $plugin_dirname . $template_name ) ) {
@@ -28,8 +28,8 @@ function bbptl_locate_template( $template_names, $load = false, $require_once = 
 		} else if ( file_exists( TEMPLATEPATH . $plugin_dirname . $template_name ) ) {
 			$located_template = TEMPLATEPATH . $plugin_dirname . $template_name;
 			break;
-		} else if ( file_exists( bbp_topic_location()->templates_dir . $template_name ) ) {
-                        $located_template = bbp_topic_location()->templates_dir . $template_name;
+		} else if ( file_exists( bbptl()->templates_dir . $template_name ) ) {
+                        $located_template = bbptl()->templates_dir . $template_name;
 			break;
 		}
 	}
@@ -50,7 +50,7 @@ function bbptl_locate_template( $template_names, $load = false, $require_once = 
  * @return boolean
  */
 
-function bbptl_get_location_raw( $post_id = 0 ) {
+function bbptl_get_location_obj( $post_id = 0 ) {
 
     global $post;
     if(!$post_id) $post_id = $post->ID;
@@ -65,7 +65,7 @@ function bbptl_get_location_raw( $post_id = 0 ) {
     $location['Latitude'] = $lat;
     $location['Longitude'] = $long;
 
-    return apply_filters( 'bbptl_get_location_raw',$location, $post_id);
+    return $location;
 }
 
 /**
@@ -85,9 +85,9 @@ function bbptl_get_location_raw( $post_id = 0 ) {
     $lat2 = deg2rad($lat2);
     $lng2 = deg2rad($lng2);
     
-    $current_unit = bbptl_get_current_unit();
+    $current_unit = bbptl_get_current_unit_obj();
     $mult_factor = $current_unit['factor'];
-    $radius = bbp_topic_location()->earth_radius_miles/$mult_factor;
+    $radius = bbptl()->earth_radius_miles/$mult_factor;
 
     // Calculate the distance
     $distance = $radius * acos(
@@ -102,12 +102,15 @@ function bbptl_get_location_raw( $post_id = 0 ) {
     return $distance;
 }
 
-
-function bbptl_get_current_unit(){
-    $current_geo_unit = bbp_topic_location()->current_geo_unit;
-    $geo_units = bbp_topic_location()->geo_units;
+function bbptl_get_current_unit_obj(){
     
-    return $geo_units[$current_geo_unit];
+    $available = bbptl()->geo_units;
+    $selected = bbptl()->get_option( '_bbptl_geo_unit');
+
+    foreach($available as $unit){
+        if ($unit['slug'] == $selected) return $unit;
+    }
+    
 }
 
 ?>

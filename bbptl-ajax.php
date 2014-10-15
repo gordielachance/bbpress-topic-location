@@ -22,7 +22,7 @@ function bbptl_ajax_coords_to_address() {
     
     $json['geo_input']=$geo_input;
 
-    $bbptl_geolocation = bbp_topic_location()->validate_geolocation($geo_input);
+    $bbptl_geolocation = bbptl()->validate_geolocation($geo_input);
     
     if($bbptl_geolocation){
         $json['success']=true;

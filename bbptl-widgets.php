@@ -129,9 +129,13 @@ class BBPTL_Search_Widget extends WP_Widget {
 	 * @uses bbp_parse_args() To merge widget settings into defaults
 	 */
 	public function parse_settings( $instance = array() ) {
+            
+            $dist = bbptl()->get_option( '_bbptl_distance');
+            
+            
                 return wp_parse_args($instance, array(
-			'title' => __( 'Search Forums', 'bbpress' ),
-                        'distance'=>bbp_topic_location()->distance
+			'title'     => __( 'Search Forums', 'bbpress' ),
+                        'distance'  => $dist
 		));
 	}
 }
@@ -143,7 +147,7 @@ function bbptl_search_widget_geolocation_fields(){
             <p class="bbptl_distance_field">
                 <label for="bbptl_search_dist"><?php _e( 'Distance:', 'bbptl' ); ?></label>
                 <input tabindex="<?php bbp_tab_index(); ?>" type="text" value="<?php echo esc_attr( bbptl_get_search_distance() ); ?>" name="bbptl_search_dist" id="bbptl_search_dist" size="2"/>
-                <?php bbptl_unit_name() ;?>
+                <span class="bbptl_distance_unit"><?php bbptl_unit_name();?></span>
             </p>
         </div>
         <?php

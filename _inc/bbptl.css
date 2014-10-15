@@ -20,3 +20,9 @@
 .bbptl_search_widget_display #bbptl_search_submit{
     margin-top:10px;
 }
+
+/*post & replies, displayed*/
+.hentry.has-location .bbptl-post-location{
+    background:url("images/home_icon.gif") no-repeat scroll 0% 50% transparent;
+    padding-left:20px !important;
+}
