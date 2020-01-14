@@ -1,4 +1,6 @@
-jQuery(document).ready(function($){
+var $ = jQuery.noConflict();
+
+$(document).ready(function($){
     
     /* HANDLE LOCATION BLOCKS
      * be careful, this should work for both frontend & backend*/
@@ -90,11 +92,11 @@ jQuery(document).ready(function($){
 	
 });
 
-jQuery.fn.extend({
+$.fn.extend({
     bpptl_geolocate: function(lat,lng,addr) {
         return this.each(function() {
             
-            var input = jQuery(this);
+            var input = $(this);
             
             var ajax_data = {
                 action: 'bbptl_coords_to_address'
@@ -110,13 +112,12 @@ jQuery.fn.extend({
                     ajax_data._bbptl_addr=addr;
                 }
 
-                jQuery.ajax({
+                $.ajax({
                         type: "post",url: ajaxurl,data:ajax_data,
                         dataType:   'json',
                         beforeSend: function() {
                             input.addClass('loading');
                             input.attr('disabled', 'disabled');
-                            input.val(bbptlL10n.loading);
                         },
                         success: function(json){
 
@@ -145,14 +146,18 @@ jQuery.fn.extend({
 
    },
     bpptl_geolocate_message: function(message) {
+
+        this.siblings('.bbp-template-notice').remove(); //remove old notices
+
+        var block = $('<div class="bbp-template-notice"></div>');
+        var list = $('<ul></ul>');
+        block.append(list).insertBefore(this);
         
         return this.each(function() {
             
-            var block = jQuery('<div class="bbp-template-notice">my message</div>');
             console.log("message:"+message); //I received it in the console
-            block.append(message);
-            console.log(jQuery(this));
-            jQuery(block).insertBefore(this);
+            var list_item = $('<li>'+message+'</li>');
+            list.append(list_item);
             
         });
 

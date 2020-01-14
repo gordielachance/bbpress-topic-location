@@ -499,7 +499,6 @@ class bbPressTopicLocation {
             wp_enqueue_script($this->prefix);
 
             //localize vars
-            $localize_vars['loading']=__('Loading...','bbptl');
             $localize_vars['input_empty_text']=__('Guess my location','bbptl');
             $localize_vars['input_not_empty_text']=__('Validate this address','bbptl');
             $localize_vars['geo_error_navigator']=__('Your browser do not supports geolocation','bbptl');
