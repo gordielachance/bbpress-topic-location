@@ -6,102 +6,103 @@ $(document).ready(function($){
      * be careful, this should work for both frontend & backend*/
     $('.bbptl_location_field').each(function() {
         
-        var label = $(this).find('label');
-        var input = $(this).find('input:text');
-        var location_helper = $('<a class="bpptl_location_helper" href="#"></a>');
+        var geoBlock = $(this);
+        var label = geoBlock.find('label');
+        var searchInput = geoBlock.find('input[name="bbptl_topic_geo[input]"]');
+        var dataInputs = geoBlock.find('input.bbptl_topic_geodata');
+        var bt_search = geoBlock.find('.bbptl_search_pos_bt');
+        var bt_clear = geoBlock.find('.bbptl_clear_pos_bt');
         
-        
-        //add helper to the block
-        label.append(location_helper);
-        
-        //switch text if input is empty or not
-        input.change(function() {
-            var text;
-            if (!input.val()){
-                text=bbptlL10n.input_empty_text;
-            }else{
-                text=bbptlL10n.input_not_empty_text;
-            }
-            location_helper.html(text);
+        //toggle BTs display
+        searchInput.bind('input propertychange', function() {
+            var hasText = ( $(this).val() !== '');
+            bt_clear.toggleClass('disabled',!hasText );
+        });
+        searchInput.trigger('propertychange'); //on load
+
+        bt_clear.click(function(e){
+            e.preventDefault();
+            dataInputs.val('');
+            $(this).addClass('disabled');
         });
 
-        //get the text for helper when page loads
-        $(input).trigger('change');
+        bt_search.click(function(e){
 
-        location_helper.click(function(){
+            e.preventDefault();
+            geoBlock.find('.bbptl-feedback').remove(); //remove old notices
 
-            if (!input.val()){ //input is empty : try to get user location
-                
-                if (!navigator.geolocation){
-                    
-                    input.bpptl_geolocate_message(bbptlL10n.geo_error_navigator);
-                    
-                }else{
-                    
-                    input.addClass('loading');
+            //browser does not supports GEO
+            if (!navigator.geolocation){
+                geoBlock.bbptl_feedback(bbptlL10n.geo_error_navigator);
+                geoBlock.addClass('error');
+                return false;
+            }
 
-                    navigator.geolocation.getCurrentPosition(
+            ////
 
-                        function (position) {
-                            input.bpptl_geolocate(position.coords.latitude,position.coords.longitude);
-                        }, 
-                        // next function is the error callback
-                        function (error){
-                            
-                            var error_msg;
-                            
-                            input.removeClass('loading');
+            //clear existing data
+            var inputVal = searchInput.val();
+            bt_clear.trigger('click');
+            searchInput.val(inputVal); //...restore input value
 
-                            switch(error.code){
+            if (inputVal){ //search input
+                geoBlock.bpptl_geolocate(false,false,inputVal);
+            }else{//guess location
+                geoBlock.addClass('loading').removeClass('error');
 
-                                            case error.TIMEOUT:
-                                                            error_msg=bbptlL10n.geo_error_timeout;
-                                                            break;
-                                            case error.POSITION_UNAVAILABLE:
-                                                            error_msg=bbptlL10n.geo_error_unavailable;
-                                                            break;
-                                            case error.PERMISSION_DENIED:
-                                                            error_msg=bbptlL10n.geo_error_capability;
-                                                            break;
-                                            case error.UNKNOWN_ERROR:
-                                                            error_msg=bbptlL10n.geo_error;
-                                                            break;
-                            }
-
-                            input.bpptl_geolocate_message(error_msg);
-                                
-                        },{maximumAge:Infinity, timeout:10000}
-                    );
-
+                navigator.geolocation.getCurrentPosition(
+                    geoSuccess,
+                    geoFailure,
+                    {
+                        maximumAge:Infinity,
+                        timeout:10000
+                    }
+                );
+    
+                function geoSuccess(location){
+                    geoBlock.removeClass('loading');
+                    geoBlock.bpptl_geolocate(location.coords.latitude,location.coords.longitude);
                 }
-
-            }else{ //input not empty : try to validate address
-                
-                input.bpptl_geolocate(false,false,input.val());
-                
+                function geoFailure(error){
+                    var error_msg;
+                        
+                    geoBlock.removeClass('loading').addClass('error');
+    
+                    switch(error.code){
+    
+                        case error.TIMEOUT:
+                            error_msg=bbptlL10n.geo_error_timeout;
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            error_msg=bbptlL10n.geo_error_unavailable;
+                            break;
+                        case error.PERMISSION_DENIED:
+                            error_msg=bbptlL10n.geo_error_capability;
+                            break;
+                        case error.UNKNOWN_ERROR:
+                            error_msg=bbptlL10n.geo_error;
+                            break;
+                    }
+    
+                    geoBlock.bbptl_feedback(error_msg);
+                }
             }
-            
-            return false;
-
         });
-
-
-    });    
+    });
 	
 });
 
 $.fn.extend({
     bpptl_geolocate: function(lat,lng,addr) {
         return this.each(function() {
-            
-            var input = $(this);
+
+            var geoBlock = $(this);
             
             var ajax_data = {
-                action: 'bbptl_coords_to_address'
+                action: 'bbptl_get_gmaps_location'
             };
             
             if((lat&&lng)||(addr)){ //we have enough datas
-
 
                 if(lat&&lng){
                     ajax_data._bbptl_lat=lat;
@@ -114,26 +115,30 @@ $.fn.extend({
                         type: "post",url: ajaxurl,data:ajax_data,
                         dataType:   'json',
                         beforeSend: function() {
-                            input.addClass('loading');
+                            geoBlock.addClass('loading');
                         },
                         success: function(json){
-
                             if(json.success) { //we have found an address
                                 console.log(json);
-                               input.val(json.Address);
+                                geoBlock.find('input[name="bbptl_topic_geo[lat]"]').val(json.geodata.lat);
+                                geoBlock.find('input[name="bbptl_topic_geo[lon]"]').val(json.geodata.lon);
+                                geoBlock.find('input[name="bbptl_topic_geo[input]"]').val(json.geodata.input);
                             }else{
-
-                               input.bpptl_geolocate_message(bbptlL10n.geo_error_unavailable);
+                                if (json.message){
+                                    geoBlock.bbptl_feedback(json.message);
+                                }else{
+                                    geoBlock.bbptl_feedback('AJAX error');
+                                }
                             }
                         },
                         error: function (xhr, ajaxOptions, thrownError) {
-                            input.bpptl_geolocate_message(bbptlL10n.geo_error);
-                            console.log('bpptl_geolocate error');
+                            
+                            geoBlock.bbptl_feedback('AJAX error');
                             console.log(xhr.status);
                             console.log(thrownError);
                         },
                         complete: function() {
-                            input.removeClass('loading');
+                            geoBlock.removeClass('loading');
                         }
                  });
 
@@ -141,17 +146,19 @@ $.fn.extend({
        });
 
    },
-    bpptl_geolocate_message: function(message) {
+    bbptl_feedback: function(message) {
 
-        this.siblings('.bbp-template-notice').remove(); //remove old notices
+        console.log(message);
 
-        var block = $('<div class="bbp-template-notice"></div>');
+        var geoBlock = $(this);
+
+        geoBlock.find('.bbptl-feedback').remove(); //remove old notices
+
+        var block = $('<div class="bbp-template-notice bbptl-feedback"></div>');
         var list = $('<ul></ul>');
-        block.append(list).insertBefore(this);
+        block.append(list).appendTo( geoBlock );
         
         return this.each(function() {
-            
-            console.log(message);
 
             var list_item = $('<li>'+message+'</li>');
             list.append(list_item);

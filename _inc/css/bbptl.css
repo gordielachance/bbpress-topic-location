@@ -1,0 +1,147 @@
+@charset "UTF-8";
+@-moz-keyframes opacityPulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@-webkit-keyframes opacityPulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes opacityPulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes barberpole {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 60px 30px;
+  }
+}
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* line 35, ../scss/bbptl.scss */
+.bbptl-can-click {
+  cursor: pointer;
+  cursor: hand;
+}
+
+/* line 40, ../scss/bbptl.scss */
+.bbptl-freeze, .bbptl_location_field.loading, .bbptl_location_field .bbptl_search_row .bbptl_row_bt.disabled {
+  pointer-events: none;
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=50);
+  opacity: 0.5;
+}
+
+/* line 46, ../scss/bbptl.scss */
+.bbptl-icon:before, .bbptl-loading-icon:before {
+  font-weight: normal;
+  font-style: normal;
+  font-family: 'FontAwesome';
+  width: 1.28571429em;
+  text-align: center;
+  display: inline-block;
+}
+
+/* line 58, ../scss/bbptl.scss */
+.bbptl-loading-icon:before {
+  animation: spin 2s linear infinite;
+  content: "" !important;
+}
+
+/* line 65, ../scss/bbptl.scss */
+.bbptl_location_field.loading {
+  background-size: 30px 30px;
+  background-image: linear-gradient(45deg, rgba(0, 0, 0, 0.05) 25%, rgba(0, 0, 0, 0) 25%, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.05) 50%, rgba(0, 0, 0, 0.05) 75%, rgba(0, 0, 0, 0) 75%, rgba(0, 0, 0, 0));
+  animation: barberpole 0.5s linear infinite;
+}
+/* line 69, ../scss/bbptl.scss */
+.bbptl_location_field .bbptl_search_row {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+}
+/* line 72, ../scss/bbptl.scss */
+.bbptl_location_field .bbptl_search_row .bbptl_row_bt {
+  display: inline-block;
+  padding: .25em;
+}
+
+/* line 82, ../scss/bbptl.scss */
+.bbp-topic-meta.bbptl {
+  color: #888;
+  font-weight: bold;
+}
+
+/*widget*/
+/* line 91, ../scss/bbptl.scss */
+.bbptl_search_widget_display #bbptl_search_fields p {
+  display: inline;
+}
+/* line 95, ../scss/bbptl.scss */
+.bbptl_search_widget_display #bbptl_search_fields .bbptl_distance_field label {
+  display: none;
+}
+/* line 100, ../scss/bbptl.scss */
+.bbptl_search_widget_display #bbptl_search_submit {
+  margin-top: 10px;
+}
+
+/*post & replies, displayed*/
+/* line 109, ../scss/bbptl.scss */
+.hentry.has-location .bbptl-post-location:before {
+  content: "\f230";
+  font-family: dashicons;
+}
+/* line 113, ../scss/bbptl.scss */
+.hentry.has-location .bbptl-post-location span {
+  white-space: initial !important;
+}
+
+/* line 119, ../scss/bbptl.scss */
+.bbptl_coordinates {
+  font-size: .8em;
+  display: -webkit-flex;
+  display: flex;
+}
+/* line 120, ../scss/bbptl.scss */
+.bbptl_coordinates:before {
+  content: "\f11f";
+  font-family: dashicons;
+  display: inline-block;
+  font-size: 1rem;
+}
+/* line 128, ../scss/bbptl.scss */
+.bbptl_coordinates input {
+  margin: 0 0.5em !important;
+  font-size: 1em;
+}

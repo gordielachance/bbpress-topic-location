@@ -44,31 +44,6 @@ function bbptl_locate_template( $template_names, $load = false, $require_once = 
 }
 
 /**
- * Get the geolocation information for a post
- * @global type $post
- * @param type $post_id
- * @return boolean
- */
-
-function bbptl_get_location_obj( $post_id = 0 ) {
-
-    global $post;
-    if(!$post_id) $post_id = $post->ID;
-
-    $geo_info = get_post_meta($post_id,'_bbptl_info',true);
-    $lat = get_post_meta($post_id,'_bbptl_lat',true);
-    $long = get_post_meta($post_id,'_bbptl_lng',true);
-
-    if ((!$lat) || (!$long)) return false;
-
-    $location = $geo_info;
-    $location['Latitude'] = $lat;
-    $location['Longitude'] = $long;
-
-    return $location;
-}
-
-/**
  * Calculate distance between two points
  * @param type $lat1
  * @param type $lon1
@@ -114,9 +89,74 @@ function bbptl_get_current_unit_obj(){
 }
 
 function bbptl_is_secure() {
-    return
       (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
       || $_SERVER['SERVER_PORT'] == 443;
-  }
+}
+
+/**
+ * Check if current page is a search page
+ *
+ * @since bbPress (r4579)
+ *
+ * @global WP_Query $wp_query To check if WP_Query::bbp_is_search is true
+ * @uses bbp_is_query_name() To get the query name
+ * @return bool Is it a search page?
+ */
+function bbptl_is_search() {
+	global $wp_query;
+        
+    if(!bbp_is_search()) return false;
+
+	// Assume false
+	$retval = false;
+        
+        //TO FIX TO CHECK
+
+	// Check query
+	if ( !empty( $wp_query->bbptl_is_search ) && ( true == $wp_query->bbptl_is_search ) )
+		$retval = true;
+
+	// Check query name
+	if ( empty( $retval ) && bbp_is_query_name( 'bbptl_is_search' ) )
+		$retval = true;
+
+	// Check $_GET
+	if ( empty( $retval ) && 
+                (
+                    ((isset( $_GET[bbptl()->lat_rewrite_id] ) )&&isset( $_GET[bbptl()->lng_rewrite_id] ))
+
+                    ||(isset( $_GET[bbptl()->addr_rewrite_id]))
+                    )
+                )
+		$retval = true;
+
+	return (bool) apply_filters( 'bbptl_is_search', $retval );
+}
+
+/**
+ * Returns the post types formatted (eg. 'forums, topics and replies');
+ * @return string
+ */
+
+function bbptl_get_post_type_list($post_types){
+
+    if(!$post_types) return false;
+
+    foreach ((array)$post_types as $post_type){
+        $post_obj = get_post_type_object( $post_type );
+        $names[]=$post_obj->label;
+    }
+
+    if(count($names)>1){
+        $start = array_slice($names, 0,count($names)-1);
+        $end = end($names);
+
+        $string = sprintf(__('%1s and %2s','bbptl'),implode(', ',$start),$end);
+    }else{
+        $string = $names[0];
+    }
+
+    return strtolower($string);
+}
 
 ?>

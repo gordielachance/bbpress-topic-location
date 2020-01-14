@@ -29,10 +29,10 @@ class bbPressTopicLocationBackend {
         
         
         //add geo location field (backend)
-        add_action( 'add_meta_boxes',array( $this, 'geolocation_mbx'));
+        add_action( 'add_meta_boxes',array( $this, 'geodata_metabox'));
         
         //save geolocation (backend)
-        add_action( 'save_post',array( $this, 'geolocation_save' ) );
+        add_action( 'save_post',array( $this, 'backend_save_geodata' ) );
         
     }
     
@@ -64,6 +64,12 @@ class bbPressTopicLocationBackend {
     function register_settings_fields($settings){
         
         $settings['bbp_settings_tl'] = array(
+            '_bbptl_gmaps_apikey' => array(
+                'title'             => __( 'Google Maps API key', 'bbptl' ),
+                'callback'          => array(&$this,'setting_gmaps_apikey'),
+                'sanitize_callback' => 'sanitize_text_field',
+                'args'              => array()
+            ),
             '_bbptl_geo_unit' => array(
                 'title'             => __( 'Distance unit', 'bbptl' ),
                 'callback'          => array(&$this,'setting_geo_unit'),
@@ -80,6 +86,15 @@ class bbPressTopicLocationBackend {
 
         return $settings;
     }
+
+    function setting_gmaps_apikey() {
+        $link_url = 'https://developers.google.com/maps/documentation/geocoding/get-api-key';
+        $link_el = sprintf('<a href="%s" target="_blank">%s</a>',$link_url,__('here','bbptl'));
+        ?>
+            <input name="_bbptl_gmaps_apikey" type="text" class="regular-text code" value="<?php bbp_form_option( '_bbptl_gmaps_apikey', '' ); ?>" class="small-text"<?php bbp_maybe_admin_setting_disabled( '_bbptl_gmaps_apikey' ); ?> />
+            <label for="_bbptl_gmaps_apikey"><?php printf(__('A Google Maps API key is required for geocoding. Click %s to get one.', 'bbptl' ),$link_el); ?></label>
+        <?php
+    }
     
     function setting_geo_unit() {
         
@@ -88,7 +103,7 @@ class bbPressTopicLocationBackend {
         
         ?>
         
-        <select name="_bbptl_geo_unit" id="_bbptl_geo_unit" <?php bbp_maybe_admin_setting_disabled( '_bbptl_geo_unit' ); ?>>
+        <select name="_bbptl_geo_unit" <?php bbp_maybe_admin_setting_disabled( '_bbptl_geo_unit' ); ?>>
             <?php
             foreach ($available as $unit){
                 ?><option <?php selected( $selected, $unit['slug'] ); ?> value="<?php echo $unit['slug'];?>"><?php echo $unit['name'];?></option><?php
@@ -108,7 +123,7 @@ class bbPressTopicLocationBackend {
         
         ?>
 
-            <input name="_bbptl_distance" id="_bbptl_unit" type="number" min="1" step="1" value="<?php bbp_form_option( '_bbptl_distance', $default ); ?>" class="small-text"<?php bbp_maybe_admin_setting_disabled( '_bbptl_distance' ); ?> />
+            <input name="_bbptl_distance" type="number" min="1" step="1" value="<?php bbp_form_option( '_bbptl_distance', $default ); ?>" class="small-text"<?php bbp_maybe_admin_setting_disabled( '_bbptl_distance' ); ?> />
             <label for="_bbptl_distance"><?php esc_html_e( 'Default distance when searching results within a perimeter', 'bbptl' ); ?></label>
 
         <?php
@@ -124,15 +139,15 @@ class bbPressTopicLocationBackend {
 
     }
 
-    function geolocation_mbx(){
+    function geodata_metabox(){
         global $post;
         $post_obj = get_post_type_object( get_post_type($post) );
         foreach((array)bbptl()->get_supported_post_types() as $post_type){
-            add_meta_box( 'bbptl_location_metabox',sprintf(__( 'Geolocate this %s','bbptl' ),$post_obj->labels->singular_name),'bbptl_save_post_geolocation_field',$post_type, 'normal', 'high' );  
+            add_meta_box( 'bbptl_location_metabox',__( 'Geodata','bbptl' ),array('bbPressTopicLocation','get_post_edit_location_html'),$post_type, 'normal', 'high' );  
         }
     }
     
-    function geolocation_save($post_id){
+    function backend_save_geodata($post_id){
         global $bbptl_geolocation;
 
         // Bail if doing an autosave
@@ -152,22 +167,15 @@ class bbPressTopicLocationBackend {
 
         if ( !current_user_can( $post_obj->cap->edit_post, $post_id ) )
                 return $post_id;
-
-        //validate input
-        if ( !empty( $_POST['bbptl_location'] ) )
-            $bbptl_geolocation = $_POST['bbptl_location'];
-
-        // Filter and sanitize
-        $bbptl_geolocation = apply_filters( 'bbptl_new_location_pre',$bbptl_geolocation);
-
-        // No topic location
-        if ( empty( $bbptl_geolocation ) )
-            bbp_add_error( 'bbptl_geolocation', __( '<strong>ERROR</strong>: The location cannot be empty.','bbptl' ) );
-
-        //save location
-        $success = bbptl()->save_geolocation($post_id);
-
-        return $post_id;
+        
+        $data = isset($_POST['bbptl_topic_geo']) ? $_POST['bbptl_topic_geo'] : null;
+        $geodata = new bbPressTopicLocationGeoData();
+        
+        $geodata->lat = isset($data['lat']) ? $data['lon'] : null;
+        $geodata->lon = isset($data['lon']) ? $data['lon'] : null;
+        $geodata->input = isset($data['input']) ? $data['input'] : null;
+        
+        return $geodata->saveForPost($post_id);
 
     }
     

@@ -138,19 +138,25 @@ class BBPTL_Search_Widget extends WP_Widget {
                         'distance'  => $dist
 		));
 	}
-}
-
-function bbptl_search_widget_geolocation_fields(){
+    
+    static function geodata_fields(){
+        //TOUFIX TOUCHECK
+        $unit = bbptl_get_current_unit_obj();
         ?>
         <div id="bbptl_search_fields" class="clearable">
-            <?php bbptl_search_posts_geolocation_field();?>
+            <p class="bbptl_location_field clearable">
+                    <label for="<?php echo bbptl()->addr_rewrite_id;?>"><?php _e('Location','bbptl' );?>:</label><br />
+                    <input type="text" id="<?php echo bbptl()->addr_rewrite_id;?>" value="<?php echo get_query_var( bbptl()->addr_rewrite_id ); ?>" tabindex="<?php bbp_tab_index(); ?>" name="<?php echo bbptl()->addr_rewrite_id;?>"/>
+            </p>
             <p class="bbptl_distance_field">
                 <label for="bbptl_search_dist"><?php _e( 'Distance:', 'bbptl' ); ?></label>
-                <input tabindex="<?php bbp_tab_index(); ?>" type="text" value="<?php echo esc_attr( bbptl_get_search_distance() ); ?>" name="bbptl_search_dist" id="bbptl_search_dist" size="2"/>
-                <span class="bbptl_distance_unit"><?php bbptl_unit_name();?></span>
+                <input tabindex="<?php bbp_tab_index(); ?>" type="text" value="<?php echo esc_attr( bbptl()->get_option( '_bbptl_distance') ); ?>" name="bbptl_search_dist" id="bbptl_search_dist" size="2"/>
+                <span class="bbptl_distance_unit"><?php echo $unit['name'];?></span>
             </p>
         </div>
         <?php
+    }
+
 }
 
 

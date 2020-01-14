@@ -42,20 +42,6 @@
   @include opacity(.5);
 }
 
-input{
-  &.loading{
-      @extend .bbptl-freeze;
-      @include striped-bg();
-  }
-
-  &.bbptl-fullwidth{
-      width:100%;
-  }
-  &[type='checkbox'][readonly]{
-      @extend .bbptl-freeze;
-  }
-}
-
 .bbptl-icon{
   &:before{
       font-weight: normal;
@@ -75,14 +61,22 @@ input{
   }
 }
 
-
-.bpptl_location_helper {
-  font-size: 0.8em;
-  padding-left: 10px;
-}
-
-.bbptl_location_field input[type=text].loading {
-  background: url("images/loading.gif") no-repeat scroll 98% 50% transparent;
+.bbptl_location_field{
+  &.loading{
+    @extend .bbptl-freeze;
+    @include striped-bg();
+  }
+  .bbptl_search_row{
+    @include display-flex();
+    @include flex-shrink(0);
+    .bbptl_row_bt{
+      display:inline-block;
+      padding:.25em;
+      &.disabled{
+        @extend .bbptl-freeze;
+      }
+    }
+  }
 }
 
 .bbp-topic-meta.bbptl {
@@ -111,8 +105,28 @@ input{
 /*post & replies, displayed*/
 
 .hentry.has-location {
-  .bbptl-post-location {
-    background: url("images/home_icon.gif") no-repeat scroll 0% 50% transparent;
-    padding-left: 20px !important;
+  .bbptl-post-location{
+      &:before{
+        content: "\f230";
+        font-family: dashicons;
+      }
+      span{
+          white-space:initial!important;
+      }
   }
+}
+
+.bbptl_coordinates{
+    &:before{
+        content: "\f11f";
+        font-family: dashicons;
+        display:inline-block;
+        font-size:1rem;
+    }
+    font-size:.8em;
+    @include display-flex();
+    input{
+        margin: 0 .5em!important;
+        font-size: 1em;
+    }
 }
