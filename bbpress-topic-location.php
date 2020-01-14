@@ -488,7 +488,7 @@ class bbPressTopicLocation {
      */
     function register_scripts_styles(){
         wp_register_script($this->prefix, $this->plugin_url . '_inc/js/bbptl.js',array('jquery'),$this->version);
-        wp_register_style($this->prefix, $this->plugin_url . '_inc/bbptl.css' );
+        wp_register_style($this->prefix, $this->plugin_url . '_inc/css/bbptl.css' );
     }
 
 

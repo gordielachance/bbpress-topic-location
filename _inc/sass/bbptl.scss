@@ -1,0 +1,118 @@
+@import "compass/css3";
+@import "compass/typography/text/ellipsis";
+
+@include keyframes(opacityPulse){
+  0% {opacity: 1;}
+  50% {opacity: 0.5; }
+  100% {opacity: 1;}
+}
+
+@keyframes barberpole {
+  from { background-position: 0 0; }
+  to   { background-position: 60px 30px; }
+}
+
+@keyframes spin {
+  from {transform:rotate(0deg);}
+  to {transform:rotate(360deg);}
+}
+
+@mixin striped-bg ($color-a:rgba(black, 0.05), $color-b:rgba(0, 0, 0, 0), $direction: 45deg) {
+  background-size: 30px 30px;
+  background-image: linear-gradient(
+      $direction, 
+      $color-a    25%, 
+      $color-b    25%, 
+      $color-b    50%, 
+      $color-a    50%, 
+      $color-a    75%, 
+      $color-b    75%, 
+      $color-b
+  );
+  animation: barberpole 0.5s linear infinite;
+}
+
+.bbptl-can-click{
+  cursor: pointer;
+  cursor: hand;
+}
+
+.bbptl-freeze{
+  pointer-events: none;
+  @include opacity(.5);
+}
+
+input{
+  &.loading{
+      @extend .bbptl-freeze;
+      @include striped-bg();
+  }
+
+  &.bbptl-fullwidth{
+      width:100%;
+  }
+  &[type='checkbox'][readonly]{
+      @extend .bbptl-freeze;
+  }
+}
+
+.bbptl-icon{
+  &:before{
+      font-weight: normal;
+      font-style: normal;
+      font-family: 'FontAwesome';
+      width: 1.28571429em;
+      text-align: center;
+      display: inline-block;
+  }
+}
+
+.bbptl-loading-icon{
+  @extend .bbptl-icon;
+  &:before{
+      animation: spin 2s linear infinite;
+      content: "\f1ce"!important; //.fa-circle-o-notch;
+  }
+}
+
+
+.bpptl_location_helper {
+  font-size: 0.8em;
+  padding-left: 10px;
+}
+
+.bbptl_location_field input[type=text].loading {
+  background: url("images/loading.gif") no-repeat scroll 98% 50% transparent;
+}
+
+.bbp-topic-meta.bbptl {
+  color: #888;
+  font-weight: bold;
+}
+
+/*widget*/
+
+.bbptl_search_widget_display {
+  #bbptl_search_fields {
+    p {
+      display: inline;
+    }
+
+    .bbptl_distance_field label {
+      display: none;
+    }
+  }
+
+  #bbptl_search_submit {
+    margin-top: 10px;
+  }
+}
+
+/*post & replies, displayed*/
+
+.hentry.has-location {
+  .bbptl-post-location {
+    background: url("images/home_icon.gif") no-repeat scroll 0% 50% transparent;
+    padding-left: 20px !important;
+  }
+}

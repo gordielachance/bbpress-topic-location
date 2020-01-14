@@ -39,7 +39,6 @@ $(document).ready(function($){
                 }else{
                     
                     input.addClass('loading');
-                    input.attr('disabled', 'disabled');
 
                     navigator.geolocation.getCurrentPosition(
 
@@ -52,7 +51,6 @@ $(document).ready(function($){
                             var error_msg;
                             
                             input.removeClass('loading');
-                            input.removeAttr('disabled');
 
                             switch(error.code){
 
@@ -117,7 +115,6 @@ $.fn.extend({
                         dataType:   'json',
                         beforeSend: function() {
                             input.addClass('loading');
-                            input.attr('disabled', 'disabled');
                         },
                         success: function(json){
 
@@ -137,7 +134,6 @@ $.fn.extend({
                         },
                         complete: function() {
                             input.removeClass('loading');
-                            input.removeAttr('disabled');
                         }
                  });
 
@@ -155,7 +151,8 @@ $.fn.extend({
         
         return this.each(function() {
             
-            console.log("message:"+message); //I received it in the console
+            console.log(message);
+
             var list_item = $('<li>'+message+'</li>');
             list.append(list_item);
             
