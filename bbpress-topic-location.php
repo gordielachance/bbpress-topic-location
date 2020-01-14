@@ -97,7 +97,7 @@ class bbPressTopicLocation {
         $this->basename   = plugin_basename( $this->file );
         $this->plugin_dir = plugin_dir_path( $this->file );
         $this->plugin_url = plugin_dir_url ( $this->file );
-        $this->templates_dir = $this->plugin_dir.'theme/';
+        $this->templates_dir = $this->plugin_dir.'templates/';
 
         $this->prefix = 'bbptl';
 
