@@ -113,4 +113,10 @@ function bbptl_get_current_unit_obj(){
     
 }
 
+function bbptl_is_secure() {
+    return
+      (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+      || $_SERVER['SERVER_PORT'] == 443;
+  }
+
 ?>

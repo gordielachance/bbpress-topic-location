@@ -164,6 +164,9 @@ class bbPressTopicLocation {
             //BBPRESS
             add_action('bbp_init',array($this, 'bbpress_has_init'));
 
+            //https notice
+            add_action('admin_notices',array($this, 'https_notice'));
+
 
             //FRONTEND
 
@@ -691,6 +694,16 @@ class bbPressTopicLocation {
         }
         return $classes;
     }
+
+    function https_notice(){
+        if  (bbptl_is_secure() ) return false;
+        ?>
+        <div class="notice notice-warning is-dismissible">
+            <p><strong>bbPress Topic Location</strong> relies on the browser geolocation features.  Therefore, this plugin <a href="https://github.com/gordielachance/bbpress-topic-location/issues/2" target="_blank">requires HTTPS</a>.</p>
+        </div>
+        <?php
+
+    }   
 
 }
 
