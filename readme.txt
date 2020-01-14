@@ -2,7 +2,7 @@
 Contributors: G.Breant
 Tags: bbpress,google maps,geolocation,geo-location
 Requires at least: 3.3
-Tested up to: 4
+Tested up to: 5.3.2
 Stable tag: trunk
 Donate link:http://bit.ly/gbreant
 
@@ -12,7 +12,10 @@ This plugin adds the ability to geo-locate topics in bbPress and to search topic
 
 This plugin adds the ability to geo-locate topics in bbPress and to search topics by location from a new search widget.
 Originally developped for a classified ads forum (allowing ads to be geo-located).
-View it in action and test it [here](http://bit.ly/wpbbptldemo)
+
+HTTPS required due to [browsers security](https://github.com/gordielachance/bbpress-topic-location/issues/2).
+
+This plugin requires HTTPS.
 
 = Features =
 
@@ -22,21 +25,20 @@ View it in action and test it [here](http://bit.ly/wpbbptldemo)
 * Search results displays the distance between the input location and the posts located.
 * Saves latitude & longitude separately in posts metas ('_bbptl_lat' and '_bbptl_lng').
 
-= Contributors =
-[Contributors are listed
-here](https://github.com/gordielachance/bbpress-topic-location/contributors)
-
 = Demo =
-See it in action on [our forums](http://sandbox.pencil2d.org/forums).
 
-= Notes =
+We don't have a running demo anymore.  If you use this plugin and would like to be featured here, please [contact us](https://github.com/gordielachance/bbpress-topic-location/issues/1).
 
-For feature request and bug reports, [please use the
-forums](http://wordpress.org/support/plugin/bbpress-topic-location#postform).
+= Donate =
 
-If you are a plugin developer, [we would like to hear from
-you](https://github.com/gordielachance/bbpress-topic-location). Any contribution would be
-very welcome.
+Donations are needed to help maintain this plugin.  Please consider [supporting us](http://bit.ly/gbreant).
+This would be very appreciated — Thanks !
+
+= Bugs/Development =
+
+For feature request and bug reports, please use the [Github Issues Tracker](https://github.com/gordielachance/bbpress-votes/issues).
+
+If you are a plugin developer, [we would like to hear from you](https://github.com/gordielachance/bbpress-topic-location). Any contribution would be very welcome.
 
 == Installation ==
 
@@ -67,6 +69,9 @@ See functions listed in the file bbptl-template-tags.php
 4. Search results, with (bbPress) Geo Search Widget on the side
 
 == Changelog ==
+= XXX =
+* HTTPS notice
+* use SCSS
 = 1.0.7 =
 * Added admin settings
 * New template functions bbptl_post_has_geo(), bbptl_post_address(), bbptl_get_post_address(), bbptl_post_latitude(), bbptl_get_post_latitude(), , bbptl_post_longitude(), bbptl_get_post_longitude() 
