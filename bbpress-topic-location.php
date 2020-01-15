@@ -1,14 +1,13 @@
 <?php
 /*
  * Plugin Name: bbPress Topic Location
- * Plugin URI: http://wordpress.org/extend/plugins/bbpress-pencil-unread
- * Description: This plugin adds the ability to geo-locate a topic in bbPress.
+ * Plugin URI: https://wordpress.org/plugins/bbpress-topic-location/
+ * Description: This plugin brings topics geolocation to bbPress, and can filter topics by location and radius.
  * Author: G.Breant
- * Version: 1.0.7
- * Author URI: http://bit.ly/cc-sndbox
+ * Version: 1.0.8
+ * Author URI: https://profiles.wordpress.org/grosbouff
  * License: GPL2+
  * Text Domain: bbptl
- * Domain Path: /languages/
  */
 
 
@@ -19,12 +18,12 @@ class bbPressTopicLocation {
     /**
      * @public string plugin version
      */
-    public $version = '1.0.7';
+    public $version = '1.0.8';
 
     /**
      * @public string plugin DB version
      */
-    public $db_version = '101';
+    public $db_version = '102';
 
     /** Paths *****************************************************************/
 
@@ -75,8 +74,6 @@ class bbPressTopicLocation {
     var $options_default = array();
     var $options = array();
 
-    public $post_types = array();
-
     public $lat_rewrite_id;
     public $lng_rewrite_id;
     public $dist_rewrite_id;
@@ -97,14 +94,14 @@ class bbPressTopicLocation {
         $this->basename   = plugin_basename( $this->file );
         $this->plugin_dir = plugin_dir_path( $this->file );
         $this->plugin_url = plugin_dir_url ( $this->file );
-        $this->templates_dir = $this->plugin_dir.'theme/';
+        $this->templates_dir = $this->plugin_dir.'templates/';
 
         $this->prefix = 'bbptl';
 
         $this->lat_rewrite_id = 'bbptl_search_lat';
         $this->lng_rewrite_id = 'bbptl_search_lng';
         $this->dist_rewrite_id = 'bbptl_search_dist';
-        $this->addr_rewrite_id = 'bbptl_search_addr';
+        $this->addr_rewrite_id = 'bbptl_search_input';
 
         $this->earth_radius_miles=3959;
 
@@ -123,9 +120,8 @@ class bbPressTopicLocation {
 
         //options
         $this->options_default = array(
-            '_bbptl_geo_unit'         => 'miles',
-            '_bbptl_distance'          => '25',
-
+            '_bbptl_geo_unit'=>         'miles',
+            '_bbptl_distance'=>         '25',
         );
 
     }
@@ -133,8 +129,6 @@ class bbPressTopicLocation {
     function includes(){
 
         require( $this->plugin_dir . 'bbptl-functions.php');
-        require( $this->plugin_dir . 'bbptl-template-tags.php');
-        require( $this->plugin_dir . 'bbptl-ajax.php');
         require( $this->plugin_dir . 'bbptl-widgets.php');
 
         if (is_admin()){
@@ -145,83 +139,63 @@ class bbPressTopicLocation {
 
     function setup_actions(){
 
-            //localization (nothing to localize yet, so disable it)
-            add_action('init', array($this, 'load_plugin_textdomain'));
-            
-            //upgrade
-            add_action( 'plugins_loaded', array($this, 'upgrade'));
-            
-            //settings link
-            add_filter("plugin_action_links_$this->basename", array($this, 'settings_link' ));
-            
-            //once bbPress is loaded
-            //register scripts & styles
-            add_action('init', array($this, 'register_scripts_styles'));
+        add_action('init', array($this, 'load_plugin_textdomain'));
+        add_action('init', array($this, 'register_scripts_styles'));
+        add_action('widgets_init', 'bbptl_search_widget_init' );
+        add_action('plugins_loaded', array($this, 'upgrade'));
+        add_filter("plugin_action_links_$this->basename", array($this, 'settings_link' ));
+        add_action('admin_notices',array($this, 'https_notice'));
+        
+        add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts_styles'));
 
-            //widgets
-            add_action( 'widgets_init', 'bbptl_search_widget_init' );
+        /*
+        Queries
+        */
+        //
+        //query vars
+        add_filter('query_vars', array($this,'search_query_vars'));
+        add_filter('posts_clauses', array($this,'set_post_clauses'),10,2);
+        
+        add_action('pre_get_posts',array($this,'bbpress_remove_dummy_keyword'));
+        add_filter('pre_get_posts',array($this,'bbpress_filter_search_query'));
+        
+        /*
+        Ajax
+        */
 
-            //BBPRESS
-            add_action('bbp_init',array($this, 'bbpress_has_init'));
+        add_action('wp_ajax_bbptl_get_geocoding', array($this,'get_ajax_geocoding'));
+        add_action('wp_ajax_nopriv_bbptl_get_geocoding', array($this,'get_ajax_geocoding'));
 
+        /*
+        bbPress
+        we also have the 'bbp_init' hook
+        */
 
-            //FRONTEND
+        //save topic geo
+        add_action('bbp_new_topic',array( $this, 'frontend_save_post_geo'),10,2); //new topic
+        add_action('bbp_edit_topic',array( $this, 'frontend_save_post_geo'),10,2); //existing topic
 
-            //scripts & styles
-            add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts_styles'));
+        //post classes
+        add_filter('bbp_get_topic_class', array($this,"post_location_class"),10,2);
+        add_filter('bbp_get_reply_class', array($this,"post_location_class"),10,2);
 
-            //new topic - save geolocation (frontend)
-            add_action( 'bbp_new_topic',array( $this, 'frontend_save_geolocation'));
+        //display location template
+        add_action('bbp_theme_after_reply_content', array(__class__,"filter_bbp_post_template"));
+        add_action('bbp_theme_after_topic_content', array(__class__,"filter_bbp_post_template"));
+        add_action('bbp_theme_after_topic_meta', array(__class__,"filter_bbp_post_template"));
 
-            //edit topic - save geolocation (frontend)
-            add_action('bbp_edit_topic_post_extras',array( $this, 'frontend_save_geolocation'));
+        //edit location template
+        add_action('bbp_theme_after_topic_form_tags', array(__class__,'post_edit_location_html'));
+        
+        //define if the query is a bbpress search
+        //see http://bbpress.trac.wordpress.org/ticket/2355
+        add_filter('bbp_before_has_search_results_parse_args', array($this,'bbpress_identify_search_query'));
+        add_filter('bbp_after_has_search_results_parse_args', array($this,'bbpress_add_dummy_keyword'));
 
-            //display location
-            add_filter('bbp_get_topic_class', array(&$this,"post_location_class"),10,2);
-            add_filter('bbp_get_reply_class', array(&$this,"post_location_class"),10,2);
-            
-            add_action ('bbp_theme_after_reply_content','bbptl_location_html');
-            add_action ('bbp_theme_after_topic_content','bbptl_location_html');
-
-            //display location as icon
-            add_action('bbp_theme_after_topic_meta','bbptl_location_html');
-
-            //add geo location field (frontend)
-            add_action('bbp_theme_after_topic_form_tags','bbptl_save_post_geolocation_field');
-            //new topic - check geolocation
-            add_action( 'bbp_new_topic_pre_extras',array( $this, 'new_geolocation_field'));
-            //existing topic - check geolocation
-            add_action( 'bbp_edit_topic_pre_extras',array( $this, 'edit_geolocation_field' ));
-
-            //new topic - validate location
-            add_filter('bbptl_new_location_pre',array( $this, 'validate_geolocation'));
-            //existing topic - validate location
-            add_filter('bbp_edit_topic_pre_geolocation',array( $this, 'validate_geolocation'));
-
-
-            //SEARCH
-            //
-            //query vars
-            add_filter('query_vars', array(&$this,'search_query_vars'));
-            add_filter( 'posts_clauses', array(&$this,'set_post_clauses'),10,2);
-            add_filter('posts_request',array(&$this,'debug_search_query'),10,2);
-
-
-            //BBPRESS
-
-            //define if the query is a bbpress search
-            //see http://bbpress.trac.wordpress.org/ticket/2355
-            add_filter('bbp_before_has_search_results_parse_args', array(&$this,'bbpress_identify_search_query'));
-            add_filter('bbp_after_has_search_results_parse_args', array(&$this,'bbpress_add_dummy_keyword'));
-
-            add_action('pre_get_posts',array(&$this,'bbpress_remove_dummy_keyword'));
-            add_filter('pre_get_posts',array(&$this,'bbpress_filter_search_query'));
-
-            //warn users about the geolocated search
-            //bbPress hooks are not very practical for us so we have two.
-            add_action( 'bbp_template_before_search_results_loop', array(&$this,'bbpress_message_has_results'));//if results
-            add_action( 'bbp_template_after_search_results', array(&$this,'bbpress_message_has_no_results'));//if no results
-
+        //warn users about the geolocated search
+        //bbPress hooks are not very practical for us so we have two.
+        add_action('bbp_template_before_search_results_loop', array($this,'bbpress_message_has_results'));//if results
+        add_action('bbp_template_after_search_results', array($this,'bbpress_message_has_no_results'));//if no results
 
     }
 
@@ -243,6 +217,9 @@ class bbPressTopicLocation {
             //handle SQL
             //require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
             //dbDelta($sql);
+        }else{
+            if ($current_version < 102){
+            }
         }
 
         //update DB version
@@ -267,31 +244,17 @@ class bbPressTopicLocation {
         if (!isset($this->options_default[$name])) return;
         return $this->options_default[$name];
     }
+
+    public function get_supported_post_types(){
         
-    /**
-     * Since we fetch bbpress post types with bbpress native functions 
-     * (so, there will be a fatal error if bbpress native functions are not loaded),
-     * We need to retrieve the supported post types with the function 'get_supported_post_types',
-     * Which has a filter.
-     * When bbpress has init ('bbp_init'), we add a filter on 'bbptl_get_supported_post_types' 
-     * to add bbpress post types to the supported post types.
-     * @return type
-     */
-    function get_supported_post_types(){
-        $post_types = $this->post_types;
-        $post_types = apply_filters('bbptl_get_supported_post_types',$post_types);
-        return $post_types;
-    }
-
-    function bbpress_get_supported_post_types($post_types=array()){
-
-        $bbp_post_types = apply_filters('bbptl_bbpress_post_types',array(
-            bbp_get_topic_post_type(),
-            //bbp_get_reply_post_type()
-        ));
-
-        return array_merge($bbp_post_types,$post_types);
-
+        $types = array();
+        
+        if ( did_action('bbp_init') ){
+            $types[] = bbp_get_topic_post_type();
+            //$types[] = bbp_get_reply_post_type();
+        }
+        
+        return $types;
     }
 
     //SEARCH
@@ -309,34 +272,26 @@ class bbPressTopicLocation {
      * @return type
      */
 
-    function filter_query(&$query){
+    function filter_query($query){
 
-        $latitude = bbptl_get_search_latitude();
-        $longitude = bbptl_get_search_longitude();
-        $address = bbptl_get_search_address();
-        $distance = bbptl_get_search_distance();
-
-        if ($latitude&&$longitude) {
-                $geo_query = $latitude.','.$longitude;
-                unset($address);
-        }elseif ($address) {
-            $geo_query = $address;
-        }
-
-        //abord
+        $latitude =     get_query_var( bbptl()->lat_rewrite_id );
+        $longitude =    get_query_var( bbptl()->lng_rewrite_id );
+        $input =        get_query_var( bbptl()->addr_rewrite_id );
+        $distance =     get_query_var( bbptl()->dist_rewrite_id );
+        if (!$distance) $distance = $bbptl()->get_option( '_bbptl_distance');
+        
+        //query
+        $coords = ( $latitude && $longitude ) ? $geo_query = sprintf('%s,%s',$latitude,$longitude) : null;
+        $geo_query = $coords ? $coords : $input;
         if(!isset($geo_query)) return $query;
 
         $query->set('bpptl_origin_point_input',$geo_query);
 
-        $origin_point = $this->validate_geolocation($geo_query);
-
-        //abord
-        if(!$origin_point) return $query;
-
-        //distance
-        $origin_point['Distance']=$distance;
+        //origin
+        if ( !$origin_point = $this->get_geocoding($geo_query) ) return $query;
 
         $query->set('bpptl_origin_point',$origin_point);
+        $query->set('bpptl_distance',$distance);
         $query->set('is_bpptl',true);
 
         return $query;
@@ -349,10 +304,10 @@ class bbPressTopicLocation {
         if(!$query->get('is_bpptl')) return $clauses;
 
         $origin_point = $query->get('bpptl_origin_point');
+        $maxdistance = $query->get('bpptl_distance');
 
-        $latitude = $origin_point['Latitude'];
-        $longitude = $origin_point['Longitude'];
-        $maxdistance = $origin_point['Distance'];
+        $latitude = $origin_point->lat;
+        $longitude = $origin_point->lon;
 
         if (!$latitude || !$longitude || !$maxdistance) return $clauses;
 
@@ -367,26 +322,6 @@ class bbPressTopicLocation {
         return $clauses;
     }
 
-    function debug_search_query($request,$query) {
-
-        if(!WP_DEBUG_DISPLAY) return $request;
-        if(!$query->get('is_bpptl')) return $request;
-
-        print_r('<p>');
-        print_r($request);
-        print_r('</p>');
-
-        return $request;
-
-    }
-
-    function bbpress_has_init(){
-        add_filter('bbptl_get_supported_post_types',array(&$this,'bbpress_get_supported_post_types'));
-    }
-
-
-
-
     //define if the query is a bbpress search
     //see http://bbpress.trac.wordpress.org/ticket/2355
     function bbpress_identify_search_query($args){
@@ -394,10 +329,10 @@ class bbPressTopicLocation {
         return $args;
     }
 
+    //see https://bbpress.trac.wordpress.org/ticket/2356
     function bbpress_add_dummy_keyword($args){
-
-        if(!$args['s']) 
-            $args['s']='bbptl-dummy-term'; //see https://bbpress.trac.wordpress.org/ticket/2356
+        
+        $args['s'] = isset($args['s']) ? $args['s'] : 'bbptl-dummy-term';
 
         return $args;
     }
@@ -429,7 +364,7 @@ class bbPressTopicLocation {
         //restrict search to supported post types
         $bbptl_post_types=array();
         $query_post_types = $query->get('post_type');
-        $allowed_post_types = $this->bbpress_get_supported_post_types();
+        $allowed_post_types = $this->get_supported_post_types();
 
         foreach((array)$query_post_types as $post_type){
             if (!in_array($post_type,$allowed_post_types)) continue;
@@ -476,7 +411,7 @@ class bbPressTopicLocation {
 
         if (!$geo_input) return false;
 
-        bbptl_locate_template('feedback-geolocated.php',true);
+        bbptl_locate_template('search-feedback.php',true);
     }
 
 
@@ -485,7 +420,7 @@ class bbPressTopicLocation {
      */
     function register_scripts_styles(){
         wp_register_script($this->prefix, $this->plugin_url . '_inc/js/bbptl.js',array('jquery'),$this->version);
-        wp_register_style($this->prefix, $this->plugin_url . '_inc/bbptl.css' );
+        wp_register_style($this->prefix, $this->plugin_url . '_inc/css/bbptl.css' );
     }
 
 
@@ -496,9 +431,6 @@ class bbPressTopicLocation {
             wp_enqueue_script($this->prefix);
 
             //localize vars
-            $localize_vars['loading']=__('Loading...','bbptl');
-            $localize_vars['input_empty_text']=__('Guess my location','bbptl');
-            $localize_vars['input_not_empty_text']=__('Validate this address','bbptl');
             $localize_vars['geo_error_navigator']=__('Your browser do not supports geolocation','bbptl');
             $localize_vars['geo_error_timeout']=__('Time out','bbptl');
             $localize_vars['geo_error_unavailable']=__('Position unavailable','bbptl');
@@ -509,79 +441,84 @@ class bbPressTopicLocation {
             wp_localize_script($this->prefix,$this->prefix.'L10n', $localize_vars);
 
             //STYLES
-
             wp_enqueue_style($this->prefix);
+            wp_enqueue_style('dashicons');
     }
 
 
 
 
     function scripts_backend( $hook ) {
-            global $post;
+        global $post;
 
-            if ( $hook == 'post-new.php' || $hook == 'post.php' ) {
-                    if (in_array($post->post_type,$this->get_supported_post_types())) {     
-                            echo "<br/><br/>scripts_backend";
-                            //wp_enqueue_script(  'myscript', get_stylesheet_directory_uri().'/js/myscript.js' );
-                    }
+        if ( $hook == 'post-new.php' || $hook == 'post.php' ) {
+            if ( in_array($post->post_type,$this->get_supported_post_types()) ) {     
+                echo "<br/><br/>scripts_backend";
+                //wp_enqueue_script(  'myscript', get_stylesheet_directory_uri().'/js/myscript.js' );
             }
+        }
+    }
+    
+    function post_location_class($classes,$post_id){
+
+        $geodata = new bbPressTopicLocationGeoData();
+        $geodata->getForPost($post_id);
+        
+        if( $geodata->lat && $geodata->lon ){
+            $classes[]='has-location';
+        }
+
+        return $classes;
     }
 
+    function https_notice(){
+        //if  (bbptl_is_secure() ) return false;
+        ?>
+        <div class="notice notice-warning is-dismissible">
+            <p><strong>bbPress Topic Location</strong> relies on the browser geolocation features.  Therefore, this plugin <a href="https://github.com/gordielachance/bbpress-topic-location/issues/2" target="_blank">requires HTTPS</a>.</p>
+        </div>
+        <?php
 
-
-    /**
-    * Output value of topic location field
-    *
-    * @since bbPress (r2976)
-    * @uses get_form_topic_location() To get the value of topic location field
-    */
-    function form_topic_location() {
-            echo $this->get_form_topic_location();
     }
-            /**
-            * Return value of topic location field
-            *
-            * @since bbPress (r2976)
-            *
-            * @uses bbp_is_topic_edit() To check if it's the topic edit page
-            * @uses apply_filters() Calls 'get_form_topic_location' with the location
-            * @return string Value of topic location field
-            */
-            function get_form_topic_location() {
-                    global $post;
+    
+    function get_ajax_geocoding() {
 
-                    $topic_location = '';
+        $ajax_data = wp_unslash($_POST);
 
-                    // Get _POST data
-                    if ( 'post' == strtolower( $_SERVER['REQUEST_METHOD'] ) && isset( $_POST['bbptl_location'] ) ) {
-                            $topic_location = $_POST['bbptl_location'];
+        $lat=$lng=$addr=$geo_input='';
 
-                    // Get edit data
-                    } elseif ( !empty( $post ) ) {
+        $result = array(
+            'input'=>       $ajax_data,
+            'success'=>     false,
+        );
 
-                            // Post is a topic
-                            if ( bbp_get_topic_post_type() == $post->post_type ) {
-                                    $topic_id = $post->ID;
-                            }
+        $lat =          isset($ajax_data['_bbptl_lat']) ? trim($ajax_data['_bbptl_lat']) : null;
+        $lng =          isset($ajax_data['_bbptl_lng']) ? trim($ajax_data['_bbptl_lng']) : null;
+        $addr =         isset($ajax_data['_bbptl_addr']) ? trim($ajax_data['_bbptl_addr']) : null;
+        $geo_input =    ( $lat && $lng ) ? sprintf('%s,%s',$lat,$lng) : $addr;
 
+        if($geo_input){
+            $result['geo_input']=$geo_input;
 
-                            // Topic exists
-                            if ( !empty( $topic_id ) ) {
-                                    //don't use bbptl_get_post_address() here as there may have be filters on it. We need the real address.
-                                    $location = bbptl_get_location_obj($topic_id);
-                                    $topic_location = $location['Address'];
-
-                            }
-
-
-                    // No data
-                    }
-
-                    return apply_filters( 'bbp_get_form_topic_location', esc_attr( $topic_location ) );
+            $response = bbptl()->get_geocoding($geo_input);
+            if( is_wp_error($response) ){
+                $result['error_code'] = $response->get_error_code();
+                $result['message'] = $response->get_error_message();
+            }else{
+                $result['success']=true;
+                $result['geodata']=$response;
             }
 
+        }
 
-    function location_to_coordinates($location) {
+        header('Content-type: application/json');
+        wp_send_json( $result );
+
+    }
+    
+    static function parse_coordinates($location) {
+
+        $location = trim($location);
 
         preg_match_all("/-?\d+[\.|,]\d+/", $location, $coords, PREG_SET_ORDER);
 
@@ -592,106 +529,185 @@ class bbPressTopicLocation {
 
 
         if($lat&&$lng) return array($lat,$lng);
-
-
     }
-
-
-    function validate_geolocation($input=false){
+    
+    public function get_geocoding($input=false){
 
             $input = trim($input);
             if(!$input)return false;
 
-            if($coords = $this->location_to_coordinates($input)){
-                $args['latlng']=$coords[0].','.$coords[1];
+            $api_url = 'https://nominatim.openstreetmap.org';
+            $api_args = array(
+                'format'=>          'json',
+                'addressdetails'=>  1,
+                'limit'=>           1,
+            );
+
+            if($coords = self::parse_coordinates($input)){ //reverse geocoding
+                
+                $api_url .= '/reverse';
+                $api_args['lat'] = $coords[0];
+                $api_args['lon'] = $coords[1];
+
             }else{
-                $args['address']=urlencode($input);
+                $api_args['limit']=1;
+                $api_args['q']=urlencode($input);
+
             }
 
-            $args['sensor']='false';
-            $gmaps_url = add_query_arg($args,'http://maps.google.com/maps/api/geocode/json');
-            $geocode=file_get_contents($gmaps_url);
-            $output=json_decode($geocode);
+            $api_url = add_query_arg($api_args,$api_url);
 
-            if ($output->status=='OK') {
-                    $result = $output->results[0];
-                    $position['Latitude']= $result->geometry->location->lat;
-                    $position['Longitude']= $result->geometry->location->lng;
-                    $position['Address'] = $result->formatted_address;
-                    $position['Input'] = $input;
+            self::debug_log($api_url,'check location with Nominatim...');
+
+            $response = wp_remote_get( $api_url );
+            $json = wp_remote_retrieve_body( $response );
+            if ( is_wp_error($json) ) return $json;
+        
+            $response=json_decode($json,true);
+            self::debug_log($response,'...Nominatim entry');
+
+            if ($response) {
+                
+                $entry = ( !$coords && isset($response[0]) ) ? $response[0] : $response;
+                
+                $geodata = new bbPressTopicLocationGeoData();
+                $geodata->lat = $entry['lat'];
+                $geodata->lon = $entry['lon'];
+                $geodata->input = $entry['display_name'];
+
+                return $geodata;
             }else {
-                bbp_add_error( 'bbptl_geolocation_unknown', __( '<strong>ERROR</strong>: We were unable to find this location.','bbptl' ) );
-                return false;
+                $errortxt = sprintf('[%s] %s','OSM ERROR','error while querying OSM API');
+                return new WP_Error( 'bbptl_api_error',$errortxt);
             }
+    }
+    
+    function frontend_save_post_geo($topic_id,$forum_id){
+        $data = isset($_POST['bbptl_topic_geo']) ? $_POST['bbptl_topic_geo'] : null;
+        
+        $geodata = new bbPressTopicLocationGeoData();
+        $geodata->lat = isset($data['lat']) ? $data['lat'] : null;
+        $geodata->lon = isset($data['lon']) ? $data['lon'] : null;
+        $geodata->input = isset($data['input']) ? $data['input'] : null;
 
-            return $position;
+        return $geodata->saveForPost($topic_id);
+    }
+    
+    static public function filter_bbp_post_template(){
+        echo self::get_post_location_html( get_the_ID() );
+    }
+    
+    static public function get_post_location_html($post_id){
+        global $bbptl_geodata;
+
+        $bbptl_geodata = new bbPressTopicLocationGeoData();
+        $bbptl_geodata->getForPost($post_id);
+
+        if( !$bbptl_geodata->lat || !$bbptl_geodata->lon ) return false;
+        
+        ob_start();
+        bbptl_locate_template('geodata-display.php',true);
+        $output = ob_get_contents();
+        ob_end_clean();
+        
+        return $output;
+
+    }
+    
+    static public function post_edit_location_html(){
+        echo self::get_post_edit_location_html();
     }
 
+    static public function get_post_edit_location_html(){
+        global $post;
+        global $bbptl_geodata;
+        $bbptl_geodata = new bbPressTopicLocationGeoData();
+        $bbptl_geodata->getForPost($post->ID);
+        
+        ob_start();
+        bbptl_locate_template('geodata-edit.php',true);
+        $output = ob_get_contents();
+        ob_end_clean();
 
-
-    function new_geolocation_field(){
-            global $bbptl_geolocation;
-
-            if ( !empty( $_POST['bbptl_location'] ) )
-                    $bbptl_geolocation = $_POST['bbptl_location'];
-
-            // Filter and sanitize
-            $bbptl_geolocation = apply_filters( 'bbptl_new_location_pre',$bbptl_geolocation);
-
-            // No topic location
-            if ( empty( $bbptl_geolocation ) )
-                    bbp_add_error( 'bbptl_geolocation', __( '<strong>ERROR</strong>: The location cannot be empty.','bbptl' ) );
-    }
-    function edit_geolocation_field($topic_id){
-            global $bbptl_geolocation;
-
-            if ( !empty( $_POST['bbptl_location'] ) )
-                    $bbptl_geolocation = $_POST['bbptl_location'];
-
-            // Filter and sanitize
-            $bbptl_geolocation = apply_filters( 'bbp_edit_topic_pre_geolocation',$bbptl_geolocation);
-
-            // No topic location
-            if ( empty( $bbptl_geolocation ) )
-                    bbp_add_error( 'bbptl_geolocation', __( '<strong>ERROR</strong>: The location cannot be empty.','bbptl' ) );
+        return $output;
     }
 
-    function save_geolocation($post_id){
-        global $bbptl_geolocation;
+    public static function debug_log($data,$title = null) {
 
-        $geo_info['Input']=$bbptl_geolocation['Input'];
-        $geo_info['Address']=$bbptl_geolocation['Address'];
+        if (WP_DEBUG_LOG !== true) return false;
 
-        $lat=$bbptl_geolocation['Latitude'];
-        $long=$bbptl_geolocation['Longitude'];
+        $prefix = '[bbptl] ';
+        if($title) $prefix.=$title.': ';
 
-        if ((!$lat) || (!$long)) {  //no position found and strict mode ON
-                delete_post_meta($post_id, '_bbptl_info');
-                delete_post_meta($post_id, '_bbptl_lat');
-                delete_post_meta($post_id, '_bbptl_lng');
-
-                return false;
-        }else {
-                update_post_meta($post_id, '_bbptl_info', $geo_info);
-                update_post_meta($post_id, '_bbptl_lat', $lat);
-                update_post_meta($post_id, '_bbptl_lng', $long);
+        if (is_array($data) || is_object($data)) {
+            $data = "\n" . json_encode($data,JSON_UNESCAPED_UNICODE);
         }
 
+        error_log($prefix . $data);
+    }
+
+}
+
+class bbPressTopicLocationGeoData{
+    var $lat;
+    var $lon;
+    var $input;
+
+    function getForPost($post_id){
+        $lat = (float)get_post_meta($post_id,'_bbptl_lat',true);
+        $lon = (float)get_post_meta($post_id,'_bbptl_lng',true);
+        
+        $latlon = self::sanitizeCoordinates( array('lat'=>$lat,'lon'=>$lon) );
+        $this->lat = $latlon['lat'] ? $latlon['lat'] : null;
+        $this->lon = $latlon['lon'] ? $latlon['lon'] : null;
+
+        $this->input = get_post_meta($post_id,'_bbptl_input',true);
+    }
+    
+    function saveForPost($post_id){
+
+        $latlon = self::sanitizeCoordinates( array('lat'=>$this->lat,'lon'=>$this->lon) );
+        $this->lat = $latlon['lat'] ? $latlon['lat'] : null;
+        $this->lon = $latlon['lon'] ? $latlon['lon'] : null;
+
+        if ( !$this->input || !$this->lat || !$this->lon ) {
+            return $this->deleteForPost($post_id);
+        }
+        
+        if ( !$this->input ) {
+            return new WP_Error('missing_required_address','Missing required address');
+        }
+        
+        update_post_meta($post_id,'_bbptl_lat',$this->lat);
+        update_post_meta($post_id,'_bbptl_lng',$this->lon);
+        update_post_meta($post_id,'_bbptl_input',$this->input);
+        
         return true;
     }
     
-    function post_location_class($classes,$post_id){
-
-
-        $has_geo = bbptl_post_has_geo($post_id);
+    function deleteForPost($post_id){
+        delete_post_meta($post_id, '_bbptl_input');
+        delete_post_meta($post_id, '_bbptl_lat');
+        delete_post_meta($post_id, '_bbptl_lng');
         
-
-        if ($has_geo){
-                $classes[]='has-location';
-        }
-        return $classes;
+        return true;
     }
 
+    static public function sanitizeCoordinates($latlon = array()){
+        return array(
+            'lat'=> isset($latlon['lat']) ? self::sanitizeLatitude($latlon['lat']) : null,
+            'lon'=> isset($latlon['lon']) ? self::sanitizeLongitude($latlon['lon']) : null,
+        );
+    }
+    static public function sanitizeLatitude($latitude = null) {
+      $latitude = (float)$latitude;
+      return ( ( $latitude > -90 ) && ( $latitude < 90 ) ) ? $latitude : null;
+    }
+
+    static public function sanitizeLongitude($longitude = null) {
+      $longitude = (float)$longitude;
+      return ( ( $longitude > -180 ) && ( $longitude < 180 ) ) ? $longitude : null;
+    }
 }
 
 function bbptl(){

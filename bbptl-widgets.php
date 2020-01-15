@@ -65,15 +65,15 @@ class BBPTL_Search_Widget extends WP_Widget {
 			echo $args['before_title'] . $settings['title'] . $args['after_title'];
 		}
                 
-                //TO FIX
-                //bad coding.  But without this, ajaxurl is not defined.
-                ?>
-                <script type="text/javascript">
-                var ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';
-                </script>
-                <?php
+        //TO FIX
+        //bad coding.  But without this, ajaxurl is not defined.
+        ?>
+        <script type="text/javascript">
+        var ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';
+        </script>
+        <?php
 
-		bbptl_locate_template('form-search.php',true);
+		bbptl_locate_template('search-form.php',true);
 
 		echo $args['after_widget'];
 	}
@@ -138,19 +138,7 @@ class BBPTL_Search_Widget extends WP_Widget {
                         'distance'  => $dist
 		));
 	}
-}
 
-function bbptl_search_widget_geolocation_fields(){
-        ?>
-        <div id="bbptl_search_fields" class="clearable">
-            <?php bbptl_search_posts_geolocation_field();?>
-            <p class="bbptl_distance_field">
-                <label for="bbptl_search_dist"><?php _e( 'Distance:', 'bbptl' ); ?></label>
-                <input tabindex="<?php bbp_tab_index(); ?>" type="text" value="<?php echo esc_attr( bbptl_get_search_distance() ); ?>" name="bbptl_search_dist" id="bbptl_search_dist" size="2"/>
-                <span class="bbptl_distance_unit"><?php bbptl_unit_name();?></span>
-            </p>
-        </div>
-        <?php
 }
 
 
