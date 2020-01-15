@@ -109,8 +109,6 @@ function bbptl_is_search() {
 
 	// Assume false
 	$retval = false;
-        
-        //TO FIX TO CHECK
 
 	// Check query
 	if ( !empty( $wp_query->bbptl_is_search ) && ( true == $wp_query->bbptl_is_search ) )
@@ -122,12 +120,12 @@ function bbptl_is_search() {
 
 	// Check $_GET
 	if ( empty( $retval ) && 
-                (
-                    ((isset( $_GET[bbptl()->lat_rewrite_id] ) )&&isset( $_GET[bbptl()->lng_rewrite_id] ))
+        (
+            ((isset( $_GET[bbptl()->lat_rewrite_id] ) )&&isset( $_GET[bbptl()->lng_rewrite_id] ))
 
-                    ||(isset( $_GET[bbptl()->addr_rewrite_id]))
-                    )
-                )
+            ||(isset( $_GET[bbptl()->addr_rewrite_id]))
+            )
+        )
 		$retval = true;
 
 	return (bool) apply_filters( 'bbptl_is_search', $retval );

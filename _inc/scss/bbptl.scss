@@ -87,19 +87,19 @@
 /*widget*/
 
 .bbptl_search_widget_display {
-  #bbptl_search_fields {
+    #bbptl_search_fields {
     p {
-      display: inline;
+        @include display-flex();
+        > * {
+            display:inline-block;
+        }
     }
 
-    .bbptl_distance_field label {
-      display: none;
     }
-  }
 
-  #bbptl_search_submit {
-    margin-top: 10px;
-  }
+    #bbptl_search_submit {
+        margin-top: 10px;
+    }
 }
 
 /*post & replies, displayed*/

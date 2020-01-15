@@ -105,11 +105,12 @@
 /*widget*/
 /* line 91, ../scss/bbptl.scss */
 .bbptl_search_widget_display #bbptl_search_fields p {
-  display: inline;
+  display: -webkit-flex;
+  display: flex;
 }
-/* line 95, ../scss/bbptl.scss */
-.bbptl_search_widget_display #bbptl_search_fields .bbptl_distance_field label {
-  display: none;
+/* line 93, ../scss/bbptl.scss */
+.bbptl_search_widget_display #bbptl_search_fields p > * {
+  display: inline-block;
 }
 /* line 100, ../scss/bbptl.scss */
 .bbptl_search_widget_display #bbptl_search_submit {

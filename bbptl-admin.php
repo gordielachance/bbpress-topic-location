@@ -110,7 +110,7 @@ class bbPressTopicLocationBackend {
         global $post;
 
         if ( $hook != 'post-new.php' && $hook != 'post.php' ) return;
-        if (!in_array($post->post_type,bbptl()->get_supported_post_types())) return;
+        if ( !in_array($post->post_type,bbptl()->get_supported_post_types()) ) return;
 
         bbptl()->enqueue_scripts_styles();
 
@@ -120,7 +120,7 @@ class bbPressTopicLocationBackend {
         global $post;
         $post_obj = get_post_type_object( get_post_type($post) );
         foreach((array)bbptl()->get_supported_post_types() as $post_type){
-            add_meta_box( 'bbptl_location_metabox',__( 'Geodata','bbptl' ),array('bbPressTopicLocation','get_post_edit_location_html'),$post_type, 'normal', 'high' );  
+            add_meta_box( 'bbptl_location_metabox',__( 'Geodata','bbptl' ),array('bbPressTopicLocation','post_edit_location_html'),$post_type, 'normal', 'high' );  
         }
     }
     
@@ -147,7 +147,7 @@ class bbPressTopicLocationBackend {
         $data = isset($_POST['bbptl_topic_geo']) ? $_POST['bbptl_topic_geo'] : null;
         $geodata = new bbPressTopicLocationGeoData();
         
-        $geodata->lat = isset($data['lat']) ? $data['lon'] : null;
+        $geodata->lat = isset($data['lat']) ? $data['lat'] : null;
         $geodata->lon = isset($data['lon']) ? $data['lon'] : null;
         $geodata->input = isset($data['input']) ? $data['input'] : null;
         
