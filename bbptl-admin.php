@@ -13,27 +13,20 @@ class bbPressTopicLocationBackend {
         
     }
     function setup_actions(){
-        
-        add_action( 'admin_enqueue_scripts', array( $this, 'scripts_styles' ) );
-        
+
+        add_action('admin_enqueue_scripts', array( $this, 'scripts_styles' ) );
+        add_action('add_meta_boxes',array( $this, 'geodata_metabox'));
+        add_action('save_post',array( $this, 'backend_save_post_geo' ) );
         
         //settings section
         //http://www.hudsonatwell.co/tutorials/bbpress-development-add-settings/
         add_filter('bbp_admin_get_settings_sections', array( $this, 'add_settings_section'));
-        add_filter( 'bbp_admin_get_settings_fields', array( $this, 'register_settings_fields'));
+        add_filter('bbp_admin_get_settings_fields', array( $this, 'register_settings_fields'));
         add_filter('bbp_map_settings_meta_caps', array( $this, 'setting_add_permissions_autodelete') , 10, 4);
-        
         
         //add_action( 'admin_menu', array( $this, 'settings_page_init' ) );
         //add_action( 'admin_init', array( $this, 'page_init' ) );
-        
-        
-        //add geo location field (backend)
-        add_action( 'add_meta_boxes',array( $this, 'geodata_metabox'));
-        
-        //save geolocation (backend)
-        add_action( 'save_post',array( $this, 'backend_save_geodata' ) );
-        
+
     }
     
     
@@ -47,12 +40,12 @@ class bbPressTopicLocationBackend {
         return $sections;
     }
     
-    //capability needed to show those settings
+    //capability required to show those settings
     function setting_add_permissions_autodelete ( $caps, $cap, $user_id, $args ){
-            if ($cap=='bbp_settings_tl')
-                    $caps = array( bbpress()->admin->minimum_capability );
+        if ($cap=='bbp_settings_tl')
+            $caps = array( bbpress()->admin->minimum_capability );
 
-            return $caps;
+        return $caps;
     }
     
     function settings_section_header(){
@@ -64,12 +57,6 @@ class bbPressTopicLocationBackend {
     function register_settings_fields($settings){
         
         $settings['bbp_settings_tl'] = array(
-            '_bbptl_gmaps_apikey' => array(
-                'title'             => __( 'Google Maps API key', 'bbptl' ),
-                'callback'          => array(&$this,'setting_gmaps_apikey'),
-                'sanitize_callback' => 'sanitize_text_field',
-                'args'              => array()
-            ),
             '_bbptl_geo_unit' => array(
                 'title'             => __( 'Distance unit', 'bbptl' ),
                 'callback'          => array(&$this,'setting_geo_unit'),
@@ -87,15 +74,6 @@ class bbPressTopicLocationBackend {
         return $settings;
     }
 
-    function setting_gmaps_apikey() {
-        $link_url = 'https://developers.google.com/maps/documentation/geocoding/get-api-key';
-        $link_el = sprintf('<a href="%s" target="_blank">%s</a>',$link_url,__('here','bbptl'));
-        ?>
-            <input name="_bbptl_gmaps_apikey" type="text" class="regular-text code" value="<?php bbp_form_option( '_bbptl_gmaps_apikey', '' ); ?>" class="small-text"<?php bbp_maybe_admin_setting_disabled( '_bbptl_gmaps_apikey' ); ?> />
-            <label for="_bbptl_gmaps_apikey"><?php printf(__('A Google Maps API key is required for geocoding. Click %s to get one.', 'bbptl' ),$link_el); ?></label>
-        <?php
-    }
-    
     function setting_geo_unit() {
         
         $available = bbptl()->geo_units;
@@ -120,11 +98,10 @@ class bbPressTopicLocationBackend {
     function setting_distance() {
         
         $default = bbptl()->get_default_option('_bbptl_distance');
-        
         ?>
 
-            <input name="_bbptl_distance" type="number" min="1" step="1" value="<?php bbp_form_option( '_bbptl_distance', $default ); ?>" class="small-text"<?php bbp_maybe_admin_setting_disabled( '_bbptl_distance' ); ?> />
-            <label for="_bbptl_distance"><?php esc_html_e( 'Default distance when searching results within a perimeter', 'bbptl' ); ?></label>
+        <input name="_bbptl_distance" type="number" min="1" step="1" value="<?php bbp_form_option( '_bbptl_distance', $default ); ?>" class="small-text"<?php bbp_maybe_admin_setting_disabled( '_bbptl_distance' ); ?> />
+        <label for="_bbptl_distance"><?php esc_html_e( 'Default distance when searching results within a perimeter', 'bbptl' ); ?></label>
 
         <?php
     }
@@ -147,8 +124,7 @@ class bbPressTopicLocationBackend {
         }
     }
     
-    function backend_save_geodata($post_id){
-        global $bbptl_geolocation;
+    function backend_save_post_geo($post_id){
 
         // Bail if doing an autosave
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )

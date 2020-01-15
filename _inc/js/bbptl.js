@@ -99,7 +99,7 @@ $.fn.extend({
             var geoBlock = $(this);
             
             var ajax_data = {
-                action: 'bbptl_get_gmaps_location'
+                action: 'bbptl_get_geocoding'
             };
             
             if((lat&&lng)||(addr)){ //we have enough datas
