@@ -4,7 +4,7 @@
  * Plugin URI: https://wordpress.org/plugins/bbpress-topic-location/
  * Description: This plugin brings topics geolocation to bbPress, and can filter topics by location and radius.
  * Author: G.Breant
- * Version: 1.0.8
+ * Version: 1.0.9
  * Author URI: https://profiles.wordpress.org/grosbouff
  * License: GPL2+
  * Text Domain: bbptl
@@ -18,7 +18,7 @@ class bbPressTopicLocation {
     /**
      * @public string plugin version
      */
-    public $version = '1.0.8';
+    public $version = '1.0.9';
 
     /**
      * @public string plugin DB version
@@ -432,11 +432,11 @@ class bbPressTopicLocation {
 
             $localize_vars = array(
               'secure_origin'=>           bbptl_is_secure_origin(),
-              'no_navigation_support'=>   __('Your browser do not supports geolocation','bbptl'),
-              'error_timeout'=>           __('Time out','bbptl'),
-              'position_unavailable'=>    __('Position unavailable','bbptl'),
-              'permission_denied'=>       __('Permission denied','bbptl'),
-              'unknown_error'=>           __('Unknown error','bbptl'),
+              'no_navigation_support'=>   __('Your browser do not supports geolocation.','bbptl'),
+              'error_timeout'=>           __('Time out.','bbptl'),
+              'position_unavailable'=>    __('Position unavailable.','bbptl'),
+              'permission_denied'=>       __('Geolocation permission has been denied.','bbptl'),
+              'unknown_error'=>           __('Unknown error.','bbptl'),
             );
 
             wp_localize_script($this->prefix,$this->prefix.'L10n', $localize_vars);

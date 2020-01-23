@@ -52,6 +52,8 @@ If you are a plugin developer, [we would like to hear from you](https://github.c
 4. Search results, with (bbPress) Geo Search Widget on the side
 
 == Changelog ==
+= 1.0.9 =
+* handle 'HTML Geolocation API' requires HTTPS better
 = 1.0.8 =
 * 5 years after, it's alive again !
 * updated for WP 5.3.2
@@ -61,7 +63,7 @@ If you are a plugin developer, [we would like to hear from you](https://github.c
 * HTTPS notice
 = 1.0.7 =
 * Added admin settings
-* New template functions bbptl_post_has_geo(), bbptl_post_address(), bbptl_get_post_address(), bbptl_post_latitude(), bbptl_get_post_latitude(), , bbptl_post_longitude(), bbptl_get_post_longitude() 
+* New template functions bbptl_post_has_geo(), bbptl_post_address(), bbptl_get_post_address(), bbptl_post_latitude(), bbptl_get_post_latitude(), , bbptl_post_longitude(), bbptl_get_post_longitude()
 * Added class 'has-location' for topics and replies having a location
 * Various code improvements
 = 1.0.6 =
@@ -71,7 +73,7 @@ If you are a plugin developer, [we would like to hear from you](https://github.c
 = 1.0.4 =
 * improved location form input & javascript
 * when geolocated posts are found, displays distance between origin point and post location
-* bbPress custom search widget, with geolocation parameters 
+* bbPress custom search widget, with geolocation parameters
 * ability to search forum posts by location (and radius)
 * code refactoring
 = 1.0.2 =

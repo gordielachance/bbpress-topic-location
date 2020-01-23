@@ -1,22 +1,27 @@
 var $ = jQuery.noConflict();
 
 $(document).ready(function($){
-    
+
+  var canBrowserGeolocation = ( bbptlL10n.secure_origin !== ''); //only HTTPS does support HTML Geolocation API
+
     /* HANDLE LOCATION BLOCKS
      * be careful, this should work for both frontend & backend*/
-    $('.bbptl_location_field').each(function() {
-        
+    $('.bbptl-location-field').each(function() {
+
         var geoBlock = $(this);
+        geoBlock.find('.bbp-browser-geolocation-notice').toggle(canBrowserGeolocation);
         var label = geoBlock.find('label');
         var searchInput = geoBlock.find('input[name="bbptl_topic_geo[input]"]');
         var dataInputs = geoBlock.find('input.bbptl_topic_geodata');
         var bt_search = geoBlock.find('.bbptl_search_pos_bt');
         var bt_clear = geoBlock.find('.bbptl_clear_pos_bt');
-        
-        //toggle BTs display
+
         searchInput.bind('input propertychange', function() {
             var hasText = ( $(this).val() !== '');
-            bt_clear.toggleClass('disabled',!hasText );
+            var canClear = hasText;
+            var canSearch = ( hasText || canBrowserGeolocation );
+            bt_search.toggleClass('disabled',!canSearch );
+            bt_clear.toggleClass('disabled',!canClear );
         });
         searchInput.trigger('propertychange'); //on load
 
@@ -31,15 +36,6 @@ $(document).ready(function($){
             e.preventDefault();
             geoBlock.find('.bbptl-feedback').remove(); //remove old notices
 
-            //browser does not supports GEO
-            if (!navigator.geolocation){
-                geoBlock.bbptl_feedback(bbptlL10n.no_navigation_support);
-                geoBlock.addClass('error');
-                return false;
-            }
-
-            ////
-
             //clear existing data
             var inputVal = searchInput.val();
             bt_clear.trigger('click');
@@ -48,6 +44,15 @@ $(document).ready(function($){
             if (inputVal){ //search input
                 geoBlock.bpptl_geolocate(false,false,inputVal);
             }else{//guess location
+
+              //browser does not supports GEO
+              if ( !canBrowserGeolocation || !navigator.geolocation ){
+                  geoBlock.bbptl_feedback(bbptlL10n.no_navigation_support);
+                  geoBlock.addClass('error');
+                  return false;
+              }
+
+
                 geoBlock.addClass('loading').removeClass('error');
 
                 navigator.geolocation.getCurrentPosition(
@@ -58,18 +63,18 @@ $(document).ready(function($){
                         timeout:10000
                     }
                 );
-    
+
                 function geoSuccess(location){
                     geoBlock.removeClass('loading');
                     geoBlock.bpptl_geolocate(location.coords.latitude,location.coords.longitude);
                 }
                 function geoFailure(error){
                     var error_msg;
-                        
+
                     geoBlock.removeClass('loading').addClass('error');
-    
+
                     switch(error.code){
-    
+
                         case error.TIMEOUT:
                             error_msg=bbptlL10n.error_timeout;
                             break;
@@ -83,13 +88,13 @@ $(document).ready(function($){
                             error_msg=bbptlL10n.unknown_error;
                             break;
                     }
-    
+
                     geoBlock.bbptl_feedback(error_msg);
                 }
             }
         });
     });
-	
+
 });
 
 $.fn.extend({
@@ -97,11 +102,11 @@ $.fn.extend({
         return this.each(function() {
 
             var geoBlock = $(this);
-            
+
             var ajax_data = {
                 action: 'bbptl_get_geocoding'
             };
-            
+
             if((lat&&lng)||(addr)){ //we have enough datas
 
                 if(lat&&lng){
@@ -132,7 +137,7 @@ $.fn.extend({
                             }
                         },
                         error: function (xhr, ajaxOptions, thrownError) {
-                            
+
                             geoBlock.bbptl_feedback('AJAX error');
                             console.log(xhr.status);
                             console.log(thrownError);
@@ -157,14 +162,13 @@ $.fn.extend({
         var block = $('<div class="bbp-template-notice bbptl-feedback"></div>');
         var list = $('<ul></ul>');
         block.append(list).appendTo( geoBlock );
-        
+
         return this.each(function() {
 
             var list_item = $('<li>'+message+'</li>');
             list.append(list_item);
-            
+
         });
 
    }
  });
- 
