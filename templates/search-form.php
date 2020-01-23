@@ -9,7 +9,7 @@ if (!$distance) $distance = bbptl()->get_option( '_bbptl_distance');
 		<label class="screen-reader-text hidden" for="bbp_search"><?php _e( 'Search for:', 'bbpress' ); ?></label>
 		<input tabindex="<?php bbp_tab_index(); ?>" type="text" value="<?php echo esc_attr( bbp_get_search_terms() ); ?>" name="bbp_search" id="bbp_search" />
         <div id="bbptl_search_fields" class="clearable">
-            <p class="bbptl_location_field clearable">
+            <p class="bbptl-location-field clearable">
                 <label for="<?php echo bbptl()->addr_rewrite_id;?>"><?php _e('Location','bbptl' );?>:</label>
                 <input type="text" id="<?php echo bbptl()->addr_rewrite_id;?>" value="<?php echo get_query_var( bbptl()->addr_rewrite_id ); ?>" tabindex="<?php bbp_tab_index(); ?>" name="<?php echo bbptl()->addr_rewrite_id;?>"/>
             </p>

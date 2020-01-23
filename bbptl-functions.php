@@ -17,13 +17,13 @@ function bbptl_locate_template( $template_names, $load = false, $require_once = 
 	foreach ( (array) $template_names as $template_name ) {
 		if ( ! $template_name )
 			continue;
-      
+
                 $chunks = explode(WP_PLUGIN_DIR,bbptl()->plugin_dir);
                 $plugin_dirname = $chunks[1];
 
 		if ( file_exists( STYLESHEETPATH . $plugin_dirname . $template_name ) ) {
 			$located_template = STYLESHEETPATH . $plugin_dirname . $template_name;
-                        
+
 			break;
 		} else if ( file_exists( TEMPLATEPATH . $plugin_dirname . $template_name ) ) {
 			$located_template = TEMPLATEPATH . $plugin_dirname . $template_name;
@@ -53,13 +53,13 @@ function bbptl_locate_template( $template_names, $load = false, $require_once = 
  * @return type
  */
 
- function bbptl_get_distance($lat1, $lng1, $lat2, $lng2, $round=true) { 
+ function bbptl_get_distance($lat1, $lng1, $lat2, $lng2, $round=true) {
     // Convert degrees to radians
     $lat1 = deg2rad($lat1);
     $lng1 = deg2rad($lng1);
     $lat2 = deg2rad($lat2);
     $lng2 = deg2rad($lng2);
-    
+
     $current_unit = bbptl_get_current_unit_obj();
     $mult_factor = $current_unit['factor'];
     $radius = bbptl()->earth_radius_miles/$mult_factor;
@@ -78,19 +78,24 @@ function bbptl_locate_template( $template_names, $load = false, $require_once = 
 }
 
 function bbptl_get_current_unit_obj(){
-    
+
     $available = bbptl()->geo_units;
     $selected = bbptl()->get_option( '_bbptl_geo_unit');
 
     foreach($available as $unit){
         if ($unit['slug'] == $selected) return $unit;
     }
-    
+
 }
 
-function bbptl_is_secure() {
-      (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-      || $_SERVER['SERVER_PORT'] == 443;
+/*
+Is secure origin ? Required for HTML Geolocation API
+https://github.com/gordielachance/bbpress-topic-location/issues/2
+chrome://flags/#unsafely-treat-insecure-origin-as-secure
+*/
+function bbptl_is_secure_origin() {
+			(!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+			|| $_SERVER['SERVER_PORT'] == 443;
 }
 
 /**
@@ -104,7 +109,7 @@ function bbptl_is_secure() {
  */
 function bbptl_is_search() {
 	global $wp_query;
-        
+
     if(!bbp_is_search()) return false;
 
 	// Assume false
@@ -119,7 +124,7 @@ function bbptl_is_search() {
 		$retval = true;
 
 	// Check $_GET
-	if ( empty( $retval ) && 
+	if ( empty( $retval ) &&
         (
             ((isset( $_GET[bbptl()->lat_rewrite_id] ) )&&isset( $_GET[bbptl()->lng_rewrite_id] ))
 

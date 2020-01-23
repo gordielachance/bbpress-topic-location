@@ -2,12 +2,12 @@
 global $bbptl_geodata;
 
 $geodata = ($bbptl_geodata) ? $bbptl_geodata : new bbPressTopicLocationGeoData();
-
+$classes = array('bbptl-location-field','clearable');
 ?>
-<div class="bbptl_location_field clearable">
+<div class="<?php echo implode(' ',$classes);?>">
     <p>
         <label><?php _e('Location:','bbptl' );?></label>
-        <div class="bbp-template-notice"><ul><li><? _e("Leave empty and click 'Search' to detect your current location.",'bbptl');?></li></ul></div>
+        <div class="bbp-browser-geolocation-notice bbp-template-notice notice is-dismissible"><ul><li><? _e("Leave empty and click 'Search' to detect your current location.",'bbptl');?></li></ul></div>
         <span class="bbptl_search_row">
             <input name="bbptl_topic_geo[input]" class="bbptl_topic_geodata" type="text" value="<?php echo $geodata->input; ?>" tabindex="<?php bbp_tab_index(); ?>" size="40" placeholder="<?php _e('Enter location','wpsstm');?>" />
             <a class="bbptl_row_bt bbptl_search_pos_bt" href="#"><?php _e('Search','bbptl');?></a>

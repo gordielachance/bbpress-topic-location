@@ -18,7 +18,7 @@ It has been originally developped for a classified ads forum.
 
 * Works both for frontend & backend
 * Users can set the location of a post manually or automatically (HTML Geolocation API)
-* Geocoding using the (Nominatim API)[https://nominatim.openstreetmap.org/] (Open Street Maps)
+* Geocoding using the [Nominatim API](https://nominatim.openstreetmap.org/) by [Open Street Maps](https://www.openstreetmap.org/)
 * Search posts by location and radius
 
 = Demo =

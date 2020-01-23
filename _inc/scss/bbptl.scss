@@ -61,7 +61,7 @@
   }
 }
 
-.bbptl_location_field{
+.bbptl-location-field{
   &.loading{
     @extend .bbptl-freeze;
     @include striped-bg();

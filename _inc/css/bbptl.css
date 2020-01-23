@@ -55,7 +55,7 @@
 }
 
 /* line 40, ../scss/bbptl.scss */
-.bbptl-freeze, .bbptl_location_field.loading, .bbptl_location_field .bbptl_search_row .bbptl_row_bt.disabled {
+.bbptl-freeze, .bbptl-location-field.loading, .bbptl-location-field .bbptl_search_row .bbptl_row_bt.disabled {
   pointer-events: none;
   filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=50);
   opacity: 0.5;
@@ -78,20 +78,20 @@
 }
 
 /* line 65, ../scss/bbptl.scss */
-.bbptl_location_field.loading {
+.bbptl-location-field.loading {
   background-size: 30px 30px;
   background-image: linear-gradient(45deg, rgba(0, 0, 0, 0.05) 25%, rgba(0, 0, 0, 0) 25%, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.05) 50%, rgba(0, 0, 0, 0.05) 75%, rgba(0, 0, 0, 0) 75%, rgba(0, 0, 0, 0));
   animation: barberpole 0.5s linear infinite;
 }
 /* line 69, ../scss/bbptl.scss */
-.bbptl_location_field .bbptl_search_row {
+.bbptl-location-field .bbptl_search_row {
   display: -webkit-flex;
   display: flex;
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
 }
 /* line 72, ../scss/bbptl.scss */
-.bbptl_location_field .bbptl_search_row .bbptl_row_bt {
+.bbptl-location-field .bbptl_search_row .bbptl_row_bt {
   display: inline-block;
   padding: .25em;
 }

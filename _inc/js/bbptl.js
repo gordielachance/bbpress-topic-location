@@ -33,7 +33,7 @@ $(document).ready(function($){
 
             //browser does not supports GEO
             if (!navigator.geolocation){
-                geoBlock.bbptl_feedback(bbptlL10n.geo_error_navigator);
+                geoBlock.bbptl_feedback(bbptlL10n.no_navigation_support);
                 geoBlock.addClass('error');
                 return false;
             }
@@ -71,16 +71,16 @@ $(document).ready(function($){
                     switch(error.code){
     
                         case error.TIMEOUT:
-                            error_msg=bbptlL10n.geo_error_timeout;
+                            error_msg=bbptlL10n.error_timeout;
                             break;
                         case error.POSITION_UNAVAILABLE:
-                            error_msg=bbptlL10n.geo_error_unavailable;
+                            error_msg=bbptlL10n.position_unavailable;
                             break;
                         case error.PERMISSION_DENIED:
-                            error_msg=bbptlL10n.geo_error_capability;
+                            error_msg=bbptlL10n.permission_denied;
                             break;
                         case error.UNKNOWN_ERROR:
-                            error_msg=bbptlL10n.geo_error;
+                            error_msg=bbptlL10n.unknown_error;
                             break;
                     }
     
